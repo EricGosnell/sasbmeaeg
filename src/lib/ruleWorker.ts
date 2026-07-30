@@ -1,44 +1,46 @@
 self.onmessage = (event) => {
+
 	const {
 		code,
 		state
 	} = event.data;
 
+
 	try {
-		const compiledRule = new Function(
-			"state",
-			`
-			function first(state) {
-				return state[0];
-			}
 
-			function last(state) {
-				return state[state.length - 1];
-			}
+		const result =
+			new Function(
+				"state",
+				`
+				function last(state) {
+					return state[state.length - 1];
+				}
 
-			function suit(card) {
-				return card.suit;
-			}
+				function suit(card) {
+					return card.suit;
+				}
 
-			${code}
+				${code}
 
-			return rules(state);
-			`
-		);
+				return rules(state);
+				`
+			)(state);
 
-		const result = compiledRule(state);
 
 		self.postMessage({
-			ok: true,
+			ok:true,
 			result
 		});
 
-	} catch (e) {
-		console.error(e);
+	}
+
+	catch(e){
 
 		self.postMessage({
-			ok: false,
-			error: String(e)
+			ok:false,
+			error:String(e)
 		});
+
 	}
+
 };
