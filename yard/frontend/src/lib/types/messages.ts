@@ -37,7 +37,7 @@ export type ServerMessage =
 	// TODO		
 	}
 	| {
-			type: "result";
+			type: "validated";
 			card: CardData;
 			good: boolean;
 	  };

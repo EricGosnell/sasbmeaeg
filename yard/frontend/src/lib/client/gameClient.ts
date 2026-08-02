@@ -3,9 +3,7 @@ import type {
 	ServerMessage
 } from "$lib/types/messages";
 
-
 let socket: WebSocket | null = null;
-
 
 export function connect(
 	roomId:string | null,
@@ -13,49 +11,24 @@ export function connect(
 	onMessage:(msg:ServerMessage)=>void,
 	onOpen?:()=>void
 ){
-
 	socket = new WebSocket(
 		"ws://localhost:8080"
 	);
 
-
 	socket.onopen = ()=>{
-
-		console.log(
-			"websocket connected"
-		);
-
-
 		if(roomId){
-
 			send({
 				type:"join",
 				roomId,
 				playerId
 			});
-
 		}
 
-
 		onOpen?.();
-
 	};
 
-
 	socket.onmessage=(event)=>{
-
-		const msg =
-			JSON.parse(
-				event.data
-			);
-
-		console.log(
-			"CLIENT RECEIVED:",
-			msg
-		);
-
-		onMessage(msg);
-
+		onMessage(JSON.parse(event.data));
 	};
 
 }
@@ -63,9 +36,5 @@ export function connect(
 export function send(
 	message:ClientMessage
 ){
-
-	socket?.send(
-		JSON.stringify(message)
-	);
-
+	socket?.send(JSON.stringify(message));
 }

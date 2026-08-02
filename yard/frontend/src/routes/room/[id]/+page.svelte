@@ -5,23 +5,19 @@
 	import { evaluateRule } from "$lib/ruleClient";
 
 	let worker: Worker | null = null;
-	let ruleCode = $state("");
 
 	let roomId = $state("");
     let player = $state("");
+    let role = $state("");
 
     let state = $state<any[]>([]);
-    let role = $state("");
-    let result = $state("");
+
+	let ruleSubmitted = $state(false);
+	let ruleCode = $state("");
 
 	let code = $state(`function rules(state) {
 		return suit(last(state)) == "Spades";
 	}`);
-
-	let ruleSubmitted = $state(false);
-
-	let pendingPlay = $state<any>(null);
-	let lastValidated = $state<string | null>(null);
 
 	onMount(() => {
 		roomId = page.params.id;
@@ -35,72 +31,39 @@
 			roomId,
 			player,
 			async (msg) => {
-
 				console.log(
 					"WebSocket message:",
 					msg
 				);
 
 				if (msg.type === "joined") {
-
 					role = msg.role;
-
 					state = msg.state;
 
-					pendingPlay = msg.pendingPlay;
-
 					ruleSubmitted = msg.ruleSubmitted;
-
 					if (role === "yardmaster") {
 						ruleCode = msg.ruleCode;
 					}
-
-					console.log(
-						"Joined as:",
-						role
-					);
-
 				}
 
-
-				if(msg.type === "pending_play") {
-
+				if(msg.type === "evaluate") {
 					if(role === "yardmaster") {
-
-
-						const nextState = [
-							...state,
-							msg.card
-						];
-
-
-						const plainState =
-							JSON.parse(
-								JSON.stringify(nextState)
-							);
-
-
 						const good =
 							await evaluateRule(
 								code,
-								plainState
+								[...state, msg.card]
 							);
-
 
 						send({
 							type:"validate",
 							roomId,
-							playerId:player,
+							card:msg.card,
 							good
 						});
-
-
 					}
-
 				}
 
-				if (msg.type === "result") {
-
+				if (msg.type === "validated") {
 					state = [
 						...state,
 						{
@@ -108,24 +71,14 @@
 							good: msg.good
 						}
 					];
-
-					result =
-						msg.good
-							? "Good"
-							: "Bad";
-
 				}
-
 			}
 		);
 	});
 
 	async function submitRule() {
-
 		ruleSubmitted = true;
-
 		ruleCode = code;
-
 
 		send({
 			type:"rule",
@@ -135,8 +88,6 @@
 		});
 
 		worker?.terminate();
-
-
 		worker = new Worker(
 			new URL(
 				"../../../lib/ruleWorker.ts",
@@ -148,60 +99,7 @@
 		);
 	}
 
-	function evaluate(card): Promise<boolean> {
-
-		return new Promise((resolve) => {
-
-			if (!worker) {
-				resolve(false);
-				return;
-			}
-
-
-			worker.onmessage = (event) => {
-
-				if(event.data.ok){
-					resolve(
-						event.data.result
-					);
-				}
-				else {
-					console.error(
-						event.data.error
-					);
-
-					resolve(false);
-				}
-			};
-
-			const cleanState = $state.snapshot([
-				...state,
-				card
-			]);
-
-			worker.postMessage({
-				code: ruleCode,
-				state: cleanState
-			});
-
-		});
-	}
-
 	async function play(card){
-
-		if (role === "yardmaster" && !ruleSubmitted) {
-			result = "Submit rules first";
-			return;
-		}
-
-		let good = null;
-
-
-		if (role === "yardmaster") {
-			good = await evaluate(card);
-		}
-
-
 		send({
 			type:"play",
 			roomId,
