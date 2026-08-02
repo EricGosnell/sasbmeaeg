@@ -1,63 +1,40 @@
 <script lang="ts">
 import { connect, send } from "$lib/client/gameClient";
 
+let roomId = $state("");
+
 async function createRoom(){
+	const playerId = crypto.randomUUID();
 
-		const playerId =
-			crypto.randomUUID();
-
-
-		connect(
-			null,
-			playerId,
-			(msg)=>{
-				
-				if(msg.type==="created"){
-					
-					window.location.href =
-						"/room/" +
-						msg.roomId +
-						"?player=" +
-						playerId;
-
-				}
-
-			},
-			()=>{
-
-				send({
-					type:"create",
-					playerId
-				});
-
+	connect(
+		null,
+		playerId,
+		(msg)=>{
+			if(msg.type==="created"){
+				window.location.href =
+					"/room/" +
+					msg.roomId +
+					"?player=" +
+					playerId;
 			}
-		);
-
-
-	}
-
-
-	let roomId = $state("");
+		},
+		()=>{
+			send({
+				type:"create",
+				playerId
+			});
+		}
+	);
+}
 
 function joinRoom(){
-
-	const playerId =
-		crypto.randomUUID();
-
-
-	console.log(
-		"joining:",
-		roomId,
-		playerId
-	);
-
+	const playerId = crypto.randomUUID();
 
 	window.location.href =
 		"/room/" +
 		roomId +
 		"?player=" +
 		playerId;
-
 }
 
 </script>

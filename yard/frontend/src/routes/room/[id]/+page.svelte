@@ -7,140 +7,100 @@
 	import type { CardData } from "$lib/types/card";
 
 	let worker: Worker | null = null;
-	let ruleCode = $state("");
 
 	let roomId = $state("");
-	let player = $state("");
+  let playerId = $state("");
+  let role = $state("");
+	let playerName = $state("");
+	let playerNames = $state<string[]>([]);
 
-	let state = $state<any[]>([]);
-	let role = $state("");
-	let result = $state("");
-
-	let code = $state(`function rules(state) {
-       return suit(last(state)) == "Spades";
-    }`);
+  let state = $state<CardData[]>([]);
 
 	let ruleSubmitted = $state(false);
+	let ruleCode = $state("");
 
-	let pendingPlay = $state<any>(null);
-	let lastValidated = $state<string | null>(null);
+	let code = $state(`function rules(state) {
+		return suit(last(state)) == "Spades";
+	}`);
 
 	const deck: CardData[] = generateDeck(true);
 
 	onMount(() => {
 		roomId = page.params.id;
 
-		player =
-				new URLSearchParams(
-						window.location.search
-				).get("player") ?? "";
+		playerId =
+			new URLSearchParams(
+				window.location.search
+			).get("player") ?? "";
 
 		connect(
-				roomId,
-				player,
-				async (msg) => {
+			roomId,
+			playerId,
+			async (msg) => {
+				console.log(
+					"WebSocket message:",
+					msg
+				);
 
-					console.log(
-							"WebSocket message:",
-							msg
-					);
+				if (msg.type === "joined") {
+					role = msg.role;
+					state = msg.state;
+					playerNames = msg.playerNames;
 
-					if (msg.type === "joined") {
-
-						role = msg.role;
-
-						state = msg.state;
-
-						pendingPlay = msg.pendingPlay;
-
-						ruleSubmitted = msg.ruleSubmitted;
-
-						if (role === "yardmaster") {
-							ruleCode = msg.ruleCode;
-						}
-
-						console.log(
-								"Joined as:",
-								role
-						);
-
+					ruleSubmitted = msg.ruleSubmitted;
+					if (role === "yardmaster") {
+						ruleCode = msg.ruleCode;
 					}
-
-
-					if(msg.type === "pending_play") {
-
-						if(role === "yardmaster") {
-
-
-							const nextState = [
-								...state,
-								msg.card
-							];
-
-
-							const plainState =
-									JSON.parse(
-											JSON.stringify(nextState)
-									);
-
-
-							const good =
-									await evaluateRule(
-											code,
-											plainState
-									);
-
-
-							send({
-								type:"validate",
-								roomId,
-								playerId:player,
-								good
-							});
-
-
-						}
-
-					}
-
-					if (msg.type === "result") {
-
-						state = [
-							...state,
-							{
-								...msg.card,
-								good: msg.good
-							}
-						];
-
-						result =
-								msg.good
-										? "Good"
-										: "Bad";
-
-					}
-
 				}
+
+				if (msg.type === "updated") {
+					state = msg.state;
+					playerNames = msg.playerNames;
+					ruleSubmitted = msg.ruleSubmitted;
+				}
+
+				if(msg.type === "evaluate") {
+					if(role === "yardmaster") {
+						const good =
+							await evaluateRule(
+								code,
+								[...state, msg.card]
+							);
+
+						send({
+							type:"validate",
+							roomId,
+							card:msg.card,
+							good
+						});
+					}
+				}
+
+				if (msg.type === "validated") {
+					state = [
+						...state,
+						{
+							...msg.card,
+							good: msg.good
+						}
+					];
+				}
+			}
 		);
 	});
 
 	async function submitRule() {
-
 		ruleSubmitted = true;
-
 		ruleCode = code;
-
 
 		send({
 			type:"rule",
 			roomId,
-			playerId:player,
+			playerId,
 			code
 		});
 
 		worker?.terminate();
-
-
 		worker = new Worker(
 				new URL(
 						"../../../lib/ruleWorker.ts",
@@ -152,64 +112,45 @@
 		);
 	}
 
-	function evaluate(card): Promise<boolean> {
+	async function yieldRule(){
+		send({
+			type:"yield",
+			roomId,
+			playerId,
+			playerName
+		});
+	}
 
-		return new Promise((resolve) => {
+	async function beSpectator(){
+		send({
+			type:"spectate",
+			roomId,
+			playerId
+		});
+	}
 
-			if (!worker) {
-				resolve(false);
-				return;
-			}
+	async function beYarddog(){
+		send({
+			type:"yarddog",
+			roomId,
+			playerId
+		});
+	}
 
-
-			worker.onmessage = (event) => {
-
-				if(event.data.ok){
-					resolve(
-							event.data.result
-					);
-				}
-				else {
-					console.error(
-							event.data.error
-					);
-
-					resolve(false);
-				}
-			};
-
-			const cleanState = $state.snapshot([
-				...state,
-				card
-			]);
-
-			worker.postMessage({
-				code: ruleCode,
-				state: cleanState
-			});
-
+	async function changeName(){
+		send({
+			type:"change",
+			roomId,
+			playerId,
+			playerName
 		});
 	}
 
 	async function play(card){
-
-		if (role === "yardmaster" && !ruleSubmitted) {
-			result = "Submit rules first";
-			return;
-		}
-
-		let good = null;
-
-
-		if (role === "yardmaster") {
-			good = await evaluate(card);
-		}
-
-
 		send({
 			type:"play",
 			roomId,
-			playerId:player,
+			playerId,
 			card
 		});
 	}
@@ -229,22 +170,51 @@
 
 	<h2>Your Secret Rule</h2>
 
-	<textarea
-			bind:value={code}
-			rows="10"
-			cols="60"
-			disabled={role === "yardmaster" && ruleSubmitted}
-	></textarea>
+<textarea
+	bind:value={code}
+	rows="10"
+	cols="60"
+	disabled={ruleSubmitted}
+></textarea>
 
 	<br>
 
-	{#if !ruleSubmitted}
+{/if}
 
-		<button onclick={submitRule}>
-			{ruleSubmitted ? "Rule Submitted" : "Submit Rule"}
-		</button>
+{#if !ruleSubmitted}
 
-	{/if}
+{#if role === "yardmaster"}
+
+<button onclick={submitRule}>
+	{ruleSubmitted ? "Rule Submitted" : "Submit Rule"}
+</button>
+
+<input
+	bind:value={playerName}
+	placeholder="New Yardmaster"
+/>
+
+<button onclick={yieldRule}>
+	Yield Rule
+</button>
+
+{/if}
+
+{#if role === "yarddog"}
+
+<button onclick={beSpectator}>
+	Be Spectator
+</button>
+
+{/if}
+
+{#if role === "spectator"}
+
+<button onclick={beYarddog}>
+	Be Yarddog
+</button>
+
+{/if}
 
 {/if}
 
@@ -253,13 +223,27 @@
 	{#each deck as card}
 
 		<button
-				disabled={role === "yardmaster" && !ruleSubmitted}
+				disabled={!ruleSubmitted}
 				onclick={() => play(card)}
 		>
 			{card.rank} of {card.suit}
 		</button>
 
 	{/each}
+
+<input
+	bind:value={playerName}
+	placeholder="Player Name"
+/>
+
+<button onclick={changeName}>
+	Change Name
+</button>
+
+{#each playerNames as name}
+		<br>
+		{name}
+{/each}
 
 {/if}
 

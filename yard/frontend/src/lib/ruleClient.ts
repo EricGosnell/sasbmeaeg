@@ -2,9 +2,7 @@ export function evaluateRule(
 	code:string,
 	state:any[]
 ):Promise<boolean>{
-
 	return new Promise((resolve)=>{
-
 		const worker = new Worker(
 			new URL(
 				"./ruleWorker.ts",
@@ -15,23 +13,17 @@ export function evaluateRule(
 			}
 		);
 
-
 		worker.onmessage = (event)=>{
-
 			resolve(
 				event.data.result
 			);
 
 			worker.terminate();
-
 		};
-
 
 		worker.postMessage({
 			code,
-			state
+			state: JSON.parse(JSON.stringify(state))
 		});
-
 	});
-
 }

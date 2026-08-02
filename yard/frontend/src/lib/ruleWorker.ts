@@ -2,7 +2,6 @@ function runRule(
 	code: string,
 	state: any[]
 ) {
-
 	const fn = new Function(
 		"state",
 		`
@@ -93,39 +92,28 @@ function runRule(
 		return rules(state);
 		`
 	);
-
-
 	return fn(state);
-
 }
 
 
 self.onmessage = (event) => {
-
 	const {
 		code,
 		state
 	} = event.data;
 
-
 	try {
-
 		const result =
 			runRule(
 				code,
 				state
 			);
-
-
 		self.postMessage({
 			ok: true,
 			result
 		});
-
-
 	}
 	catch (e) {
-
 		self.postMessage({
 			ok: false,
 			result:false,
