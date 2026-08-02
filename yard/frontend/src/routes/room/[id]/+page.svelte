@@ -25,7 +25,7 @@
 	let pendingPlay = $state<any>(null);
 	let lastValidated = $state<string | null>(null);
 
-	const deck: CardData[] = generateDeck();
+	const deck: CardData[] = generateDeck(true);
 
 	onMount(() => {
 		roomId = page.params.id;

@@ -7,14 +7,16 @@ const suitCode: Record<Suit, string> = {
 	Spades: 'S',
 	Hearts: 'H',
 	Diamonds: 'D',
-	Clubs: 'C'
+	Clubs: 'C',
+	Joker: '',
 };
 
 const suitColor: Record<Suit, Color> = {
 	Spades: 'Black',
 	Clubs: 'Black',
 	Hearts: 'Red',
-	Diamonds: 'Red'
+	Diamonds: 'Red',
+	Joker: 'Black'
 };
 
 const faceRanks: Rank[] = ['J', 'Q', 'K'];
@@ -31,8 +33,8 @@ function isRotationallySymmetric(suit: Suit, rank: Rank) {
 
 }
 
-export function generateDeck(): CardData[] {
-	return suits.flatMap((suit) =>
+export function generateDeck(includeJokers = false): CardData[] {
+	const standardCards = suits.flatMap((suit) =>
 		ranks.map((rank) => ({
 			suit,
 			rank,
@@ -41,9 +43,20 @@ export function generateDeck(): CardData[] {
 			isRotationallySymmetric: isRotationallySymmetric(suit, rank)
 		}))
 	);
+
+	if (!includeJokers) return standardCards;
+
+	const jokers: CardData[] = [
+		{ suit: 'Joker', rank: 'Joker1', color: 'Black', isFace: false, isRotationallySymmetric: false },
+		{ suit: 'Joker', rank: 'Joker2', color: 'Red', isFace: false, isRotationallySymmetric: false }
+	];
+
+	return [...standardCards, ...jokers];
 }
 
 export function cardImage(rank: Rank, suit: Suit) {
+	if (rank === 'Joker1') return 'https://deckofcardsapi.com/static/img/X1.png';
+	if (rank === 'Joker2') return 'https://deckofcardsapi.com/static/img/X2.png';
 	return `https://deckofcardsapi.com/static/img/${rank}${suitCode[suit]}.png`;
 }
 
