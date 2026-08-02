@@ -13,6 +13,14 @@ function runRule(
 		function last(state) {
 			return state[state.length - 1];
 		}
+			
+		function nth(state, n) {
+			return state[n];
+		}
+		
+		function nth_to_last(state, n) {
+			return state[state.length-1 - n];
+		}
 		
 		function last_n(n, predicate) {
           const cards = state.slice(-n);
@@ -74,6 +82,10 @@ function runRule(
 		
 		function isRotationallySymmetric(card) {
 			return card.isRotationallySymmetric;
+		}
+		
+		function isGood(card) {
+			return card.good;
 		}
 
 		${code}
