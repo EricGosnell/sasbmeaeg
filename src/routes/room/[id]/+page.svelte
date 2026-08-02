@@ -1,6 +1,8 @@
 <script lang="ts">
 	import { page } from "$app/state";
 	import { onMount } from "svelte";
+	import { connect, send } from "$lib/client/gameClient";
+	import { evaluateRule } from "$lib/ruleClient";
 
 	let worker: Worker | null = null;
 	let ruleCode = $state("");
@@ -29,9 +31,93 @@
 				window.location.search
 			).get("player") ?? "";
 
-		refresh();
+		connect(
+			roomId,
+			player,
+			async (msg) => {
 
-		setInterval(refresh, 100);
+				console.log(
+					"WebSocket message:",
+					msg
+				);
+
+				if (msg.type === "joined") {
+
+					role = msg.role;
+
+					state = msg.state;
+
+					pendingPlay = msg.pendingPlay;
+
+					ruleSubmitted = msg.ruleSubmitted;
+
+					if (role === "yardmaster") {
+						ruleCode = msg.ruleCode;
+					}
+
+					console.log(
+						"Joined as:",
+						role
+					);
+
+				}
+
+
+				if(msg.type === "pending_play") {
+
+					if(role === "yardmaster") {
+
+
+						const nextState = [
+							...state,
+							msg.card
+						];
+
+
+						const plainState =
+							JSON.parse(
+								JSON.stringify(nextState)
+							);
+
+
+						const good =
+							await evaluateRule(
+								code,
+								plainState
+							);
+
+
+						send({
+							type:"validate",
+							roomId,
+							playerId:player,
+							good
+						});
+
+
+					}
+
+				}
+
+				if (msg.type === "result") {
+
+					state = [
+						...state,
+						{
+							...msg.card,
+							good: msg.good
+						}
+					];
+
+					result =
+						msg.good
+							? "Good"
+							: "Bad";
+
+				}
+
+			}
+		);
 	});
 
 	async function submitRule() {
@@ -40,6 +126,13 @@
 
 		ruleCode = code;
 
+
+		send({
+			type:"rule",
+			roomId,
+			playerId:player,
+			code
+		});
 
 		worker?.terminate();
 
@@ -53,106 +146,7 @@
 				type:"module"
 			}
 		);
-
-
-		await fetch(
-			`/api/rule/${roomId}`,
-			{
-				method:"POST",
-				body:JSON.stringify({
-					player,
-					code
-				})
-			}
-		);
 	}
-
-	async function autoValidate() {
-
-		if (role !== "yardmaster")
-			return;
-
-		if (!pendingPlay)
-			return;
-
-		const id =
-			JSON.stringify(pendingPlay);
-
-
-		// prevents validating the same play repeatedly
-		if (id === lastValidated)
-			return;
-
-
-		lastValidated = id;
-
-
-		const good =
-			await evaluate(
-				pendingPlay.card
-			);
-
-
-		await fetch(
-			`/api/validate/${roomId}`,
-			{
-				method:"POST",
-				body:JSON.stringify({
-					player,
-					good
-				})
-			}
-		);
-
-
-		await refresh();
-	}
-
-	async function validatePending(){
-
-		if (!pendingPlay)
-			return;
-
-
-		const good =
-			await evaluate(
-				pendingPlay.card
-			);
-
-
-		await fetch(
-			`/api/validate/${roomId}`,
-			{
-				method:"POST",
-				body:JSON.stringify({
-					player,
-					good
-				})
-			}
-		);
-
-		await refresh();
-	}
-
-	async function refresh() {
-		if (!roomId) return;
-
-		const res =
-            await fetch(
-                `/api/room/${roomId}?player=${player}`
-            );
-
-		const data =
-			await res.json();
-
-		state = data.state;
-		role = data.role;
-		pendingPlay = data.pendingPlay;
-		
-		await autoValidate();
-	}
-
-
 
 	function evaluate(card): Promise<boolean> {
 
@@ -208,19 +202,12 @@
 		}
 
 
-		await fetch(
-			`/api/play/${roomId}`,
-			{
-				method:"POST",
-				body:JSON.stringify({
-					player,
-					card,
-					good
-				})
-			}
-		);
-
-		await refresh();
+		send({
+			type:"play",
+			roomId,
+			playerId:player,
+			card
+		});
 	}
 
 </script>
@@ -242,7 +229,7 @@ Role: {role}
 	bind:value={code}
 	rows="10"
 	cols="60"
-	disabled={role === "yardmaster" && !ruleSubmitted}
+	disabled={role === "yardmaster" && ruleSubmitted}
 ></textarea>
 
 <br>
@@ -281,14 +268,16 @@ Role: {role}
 
 {/if}
 
-{#each state as card}
-	<p>
-		{card.rank} of {card.suit}:
+<ul>
+	{#each state as card}
+		<li>
+			{card.rank} of {card.suit}:
 		
-		{#if card.good}
-			Good
-		{:else}
-			Bad
-		{/if}
-	</p>
-{/each}
+			{#if card.good}
+				Good
+			{:else}
+				Bad
+			{/if}
+		</li>
+	{/each}
+</ul>

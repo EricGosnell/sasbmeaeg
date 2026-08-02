@@ -1,44 +1,62 @@
 <script lang="ts">
+import { connect, send } from "$lib/client/gameClient";
 
 async function createRoom(){
 
-	const res =
-		await fetch("/api/create", {
-			method:"POST"
-		});
+		const playerId =
+			crypto.randomUUID();
 
-	const data =
-		await res.json();
+
+		connect(
+			null,
+			playerId,
+			(msg)=>{
+				
+				if(msg.type==="created"){
+					
+					window.location.href =
+						"/room/" +
+						msg.roomId +
+						"?player=" +
+						playerId;
+
+				}
+
+			},
+			()=>{
+
+				send({
+					type:"create",
+					playerId
+				});
+
+			}
+		);
+
+
+	}
+
+
+	let roomId = $state("");
+
+function joinRoom(){
+
+	const playerId =
+		crypto.randomUUID();
+
+
+	console.log(
+		"joining:",
+		roomId,
+		playerId
+	);
 
 
 	window.location.href =
-		"/room/" + data.roomId
-		+ "?player="
-		+ data.playerId;
-
-}
-
-
-let roomId = $state("");
-
-async function joinRoom(){
-
-	const res =
-		await fetch("/api/join", {
-			method:"POST",
-			body: JSON.stringify({
-				roomId
-			})
-		});
-
-	const data =
-		await res.json();
-
-
-	window.location.href =
-		"/room/" + roomId
-		+ "?player="
-		+ data.playerId;
+		"/room/" +
+		roomId +
+		"?player=" +
+		playerId;
 
 }
 
