@@ -1,6 +1,6 @@
 <script lang="ts">
-	import type { CardData } from '$lib/types/card';
-	import { cardImage } from '$lib/utils/cards';
+	import type { CardData } from '../../../../shared';
+	import { cardImage } from '../../../../shared/src/utils/cards.ts';
 	import '$lib/styles/card.css';
 
 	let { card }: { card: CardData } = $props();

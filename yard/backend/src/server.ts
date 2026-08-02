@@ -1,5 +1,6 @@
 import { WebSocketServer } from "ws";
-import type { Suit, Rank, CardData } from "../../frontend/src/lib/types/card.js";
+import type { CardData } from "@sasbmeaeg/shared";
+import { generateDeck } from "@sasbmeaeg/shared";
 
 const wss = new WebSocketServer({port: 8080});
 
@@ -79,9 +80,9 @@ function createRoom(playerId:string) {
 }
 
 wss.on("connection", (socket) => {
-	console.log("client connected");
-	let currentRoom: string | null = null;
-    let currentPlayerId: string | null = null;
+    console.log("client connected");
+    let currentRoom: string | null = null;
+    let currentPlayerId: string = "";
 
 	socket.on("message", (raw) => {
 		const msg = JSON.parse(raw.toString());
@@ -166,15 +167,8 @@ wss.on("connection", (socket) => {
             }
 
             const n = 7;
-            const suits: Suit[] = ["S", "H", "D", "C"];
-            const ranks: Rank[] = ["A", "2", "3", "4", "5", "6", "7", "8", "9", "0", "J", "Q", "K"];
 
-            // Create deck
-            for (const suit of suits) {
-                for (const rank of ranks) {
-                    room.deck.push({ suit, rank });
-                }
-            }
+            room.deck = generateDeck(true);
 
             // Shuffle deck
             for (let i=room.deck.length-1; i>0; i--) {
