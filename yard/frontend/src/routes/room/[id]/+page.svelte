@@ -7,10 +7,12 @@
 	let worker: Worker | null = null;
 
 	let roomId = $state("");
-    let player = $state("");
+    let playerId = $state("");
     let role = $state("");
+	let playerName = $state("");
+	let playerNames = $state<string[]>([]);
 
-    let state = $state<any[]>([]);
+    let state = $state<CardData[]>([]);
 
 	let ruleSubmitted = $state(false);
 	let ruleCode = $state("");
@@ -22,14 +24,14 @@
 	onMount(() => {
 		roomId = page.params.id;
 
-		player =
+		playerId =
 			new URLSearchParams(
 				window.location.search
 			).get("player") ?? "";
 
 		connect(
 			roomId,
-			player,
+			playerId,
 			async (msg) => {
 				console.log(
 					"WebSocket message:",
@@ -39,11 +41,18 @@
 				if (msg.type === "joined") {
 					role = msg.role;
 					state = msg.state;
+					playerNames = msg.playerNames;
 
 					ruleSubmitted = msg.ruleSubmitted;
 					if (role === "yardmaster") {
 						ruleCode = msg.ruleCode;
 					}
+				}
+
+				if (msg.type === "updated") {
+					state = msg.state;
+					playerNames = msg.playerNames;
+					ruleSubmitted = msg.ruleSubmitted;
 				}
 
 				if(msg.type === "evaluate") {
@@ -83,7 +92,7 @@
 		send({
 			type:"rule",
 			roomId,
-			playerId:player,
+			playerId,
 			code
 		});
 
@@ -99,11 +108,45 @@
 		);
 	}
 
+	async function yieldRule(){
+		send({
+			type:"yield",
+			roomId,
+			playerId,
+			playerName
+		});
+	}
+
+	async function beSpectator(){
+		send({
+			type:"spectate",
+			roomId,
+			playerId
+		});
+	}
+
+	async function beYarddog(){
+		send({
+			type:"yarddog",
+			roomId,
+			playerId
+		});
+	}
+
+	async function changeName(){
+		send({
+			type:"change",
+			roomId,
+			playerId,
+			playerName
+		});
+	}
+
 	async function play(card){
 		send({
 			type:"play",
 			roomId,
-			playerId:player,
+			playerId,
 			card
 		});
 	}
@@ -127,15 +170,44 @@ Role: {role}
 	bind:value={code}
 	rows="10"
 	cols="60"
-	disabled={role === "yardmaster" && ruleSubmitted}
+	disabled={ruleSubmitted}
 ></textarea>
 
 <br>
 
+{/if}
+
 {#if !ruleSubmitted}
+
+{#if role === "yardmaster"}
 
 <button onclick={submitRule}>
 	{ruleSubmitted ? "Rule Submitted" : "Submit Rule"}
+</button>
+
+<input
+	bind:value={playerName}
+	placeholder="New Yardmaster"
+/>
+
+<button onclick={yieldRule}>
+	Yield Rule
+</button>
+
+{/if}
+
+{#if role === "yarddog"}
+
+<button onclick={beSpectator}>
+	Be Spectator
+</button>
+
+{/if}
+
+{#if role === "spectator"}
+
+<button onclick={beYarddog}>
+	Be Yarddog
 </button>
 
 {/if}
@@ -145,7 +217,7 @@ Role: {role}
 {#if role !== "spectator"}
 
 <button
-	disabled={role === "yardmaster" && !ruleSubmitted}
+	disabled={!ruleSubmitted}
 	onclick={() => play({
 		rank:"A",
 		suit:"Spades"
@@ -155,7 +227,7 @@ Role: {role}
 </button>
 
 <button
-	disabled={role === "yardmaster" && !ruleSubmitted}
+	disabled={!ruleSubmitted}
 	onclick={() => play({
 		rank:"2",
 		suit:"Diamonds"
@@ -165,6 +237,20 @@ Role: {role}
 </button>
 
 {/if}
+
+<input
+	bind:value={playerName}
+	placeholder="Player Name"
+/>
+
+<button onclick={changeName}>
+	Change Name
+</button>
+
+{#each playerNames as name}
+		<br>
+		{name}
+{/each}
 
 <ul>
 	{#each state as card}

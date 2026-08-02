@@ -12,7 +12,7 @@ export function connect(
 	onOpen?:()=>void
 ){
 	socket = new WebSocket(
-		`${location.protocol === "https:" ? "wss" : "ws"}://${location.host}/ws`
+		"ws://localhost:8080"
 	);
 
 	socket.onopen = ()=>{
