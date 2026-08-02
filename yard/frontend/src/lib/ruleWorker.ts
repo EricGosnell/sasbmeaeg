@@ -21,6 +21,18 @@ function runRule(
 		function rank(card) {
 			return card.rank;
 		}
+		
+		function color(card) {
+			return card.color;
+		}
+		
+		function isFace(card) {
+			return card.isFace;
+		}
+		
+		function isRotationallySymmetric(card) {
+			return card.isRotationallySymmetric;
+		}
 
 		${code}
 
