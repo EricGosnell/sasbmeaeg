@@ -15,7 +15,7 @@ export function connect(
 ){
 
 	socket = new WebSocket(
-		"ws://localhost:8080"
+		`${location.protocol === "https:" ? "wss" : "ws"}://${location.host}/ws`
 	);
 
 
