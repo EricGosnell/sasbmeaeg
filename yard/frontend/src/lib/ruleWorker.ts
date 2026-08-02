@@ -12,13 +12,79 @@ function runRule(
 		function last(state) {
 			return state[state.length - 1];
 		}
+			
+		function nth(state, n) {
+			return state[n];
+		}
+		
+		function nth_to_last(state, n) {
+			return state[state.length-1 - n];
+		}
+		
+		function last_n(n, predicate) {
+          const cards = state.slice(-n);
+          if (predicate) {
+             return cards.filter(predicate);
+          }
+          return cards;
+       	}
+       
+       	function last_n_matching(n, predicate) {
+			return state.filter(predicate).slice(-n);
+		}
+
+       	function sum(cards) {
+          	return cards.reduce((total, card) => total + rank(card), 0);
+       	}
+       	
+       	function product(cards) {
+        	return cards.reduce((total, card) => total * rank(card), 1);
+       	}
+
+       	function difference(cards) {
+        	if (cards.length === 0) return 0;
+        		return cards.slice(1).reduce((total, card) => total - rank(card), rank(cards[0]));
+       	}
 
 		function suit(card) {
 			return card.suit;
 		}
 
 		function rank(card) {
-			return card.rank;
+			const rankMap = {
+			   A: 1,
+			   "2": 2,
+			   "3": 3,
+			   "4": 4,
+			   "5": 5,
+			   "6": 6,
+			   "7": 7,
+			   "8": 8,
+			   "9": 9,
+			   "10": 10,
+			   J: 11,
+			   Q: 12,
+			   K: 13,
+			   Joker1: 0,
+			   Joker2: 0
+			};
+			return rankMap[card.rank];
+		}
+		
+		function color(card) {
+			return card.color;
+		}
+		
+		function isFace(card) {
+			return card.isFace;
+		}
+		
+		function isRotationallySymmetric(card) {
+			return card.isRotationallySymmetric;
+		}
+		
+		function isGood(card) {
+			return card.good;
 		}
 
 		${code}
@@ -26,9 +92,9 @@ function runRule(
 		return rules(state);
 		`
 	);
-
 	return fn(state);
 }
+
 
 self.onmessage = (event) => {
 	const {
@@ -42,7 +108,6 @@ self.onmessage = (event) => {
 				code,
 				state
 			);
-
 		self.postMessage({
 			ok: true,
 			result
@@ -54,5 +119,7 @@ self.onmessage = (event) => {
 			result:false,
 			error:String(e)
 		});
+
 	}
+
 };

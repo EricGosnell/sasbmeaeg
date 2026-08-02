@@ -3,12 +3,14 @@
 	import { onMount } from "svelte";
 	import { connect, send } from "$lib/client/gameClient";
 	import { evaluateRule } from "$lib/ruleClient";
+	import { generateDeck, cardImage } from "$lib/utils/cards";
+	import type { CardData } from "$lib/types/card";
 
 	let worker: Worker | null = null;
 
 	let roomId = $state("");
-    let playerId = $state("");
-    let role = $state("");
+  	let playerId = $state("");
+  	let role = $state("");
 	let playerName = $state("");
 	let playerNames = $state<string[]>([]);
 
@@ -21,6 +23,8 @@
 	let code = $state(`function rules(state) {
 		return suit(last(state)) == "Spades";
 	}`);
+
+	const deck: CardData[] = generateDeck(true);
 
 	onMount(() => {
 		roomId = page.params.id;
@@ -100,13 +104,13 @@
 
 		worker?.terminate();
 		worker = new Worker(
-			new URL(
-				"../../../lib/ruleWorker.ts",
-				import.meta.url
-			),
-			{
-				type:"module"
-			}
+				new URL(
+						"../../../lib/ruleWorker.ts",
+						import.meta.url
+				),
+				{
+					type:"module"
+				}
 		);
 	}
 
@@ -157,16 +161,16 @@
 
 
 <h1>
-Room {roomId}
+	Room {roomId}
 </h1>
 
 <p>
-Role: {role}
+	Role: {role}
 </p>
 
 {#if role === "yardmaster"}
 
-<h2>Your Secret Rule</h2>
+	<h2>Your Secret Rule</h2>
 
 <textarea
 	bind:value={code}
@@ -175,7 +179,7 @@ Role: {role}
 	disabled={ruleSubmitted}
 ></textarea>
 
-<br>
+	<br>
 
 {/if}
 
@@ -218,27 +222,16 @@ Role: {role}
 
 {#if role !== "spectator"}
 
-<button
-	disabled={!ruleSubmitted}
-	onclick={() => play({
-		rank:"A",
-		suit:"Spades"
-	})}
->
-	Up (Ace of Spades)
-</button>
+	{#each deck as card}
 
-<button
-	disabled={!ruleSubmitted}
-	onclick={() => play({
-		rank:"2",
-		suit:"Diamonds"
-	})}
->
-	Down (2 of Diamonds)
-</button>
+		<button
+				disabled={!ruleSubmitted}
+				onclick={() => play(card)}
+		>
+			{card.rank} of {card.suit}
+		</button>
 
-{/if}
+	{/each}
 
 <input
 	bind:value={playerName}
@@ -254,16 +247,33 @@ Role: {role}
 		{name}
 {/each}
 
-<ul>
+{/if}
+
+<div class="played-row">
 	{#each state as card}
-		<li>
-			{card.rank} of {card.suit}:
-		
-			{#if card.good}
-				Good
-			{:else}
-				Bad
-			{/if}
-		</li>
+		<img
+				class="played-card"
+				class:bad-offset={!card.good}
+				src={cardImage(card.rank, card.suit)}
+				alt="{card.rank} of {card.suit}"
+		/>
 	{/each}
-</ul>
+</div>
+
+<style>
+	.played-row {
+		display: flex;
+		flex-direction: row;
+		align-items: flex-end;
+		gap: 2px;
+		padding: 20px;
+	}
+
+	.played-card {
+		width: 80px;
+	}
+
+	.played-card.bad-offset {
+		transform: translateY(-18px);
+	}
+</style>
