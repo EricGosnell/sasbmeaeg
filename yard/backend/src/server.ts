@@ -272,10 +272,6 @@ wss.on("connection", (socket) => {
                     ];
 
 
-            console.log("room.players: ", room.players);
-            console.log("room.yardmaster: ", room.yardmaster);
-            console.log("currentPlayer: ", currentPlayer);
-            console.log("room.currentTurn: ", room.currentTurn);
             
             if (
                 msg.playerId !== currentPlayer
