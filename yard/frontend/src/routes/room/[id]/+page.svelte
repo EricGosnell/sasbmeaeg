@@ -12,6 +12,7 @@
 	let playerName = $state("");
 	let playerNames = $state<string[]>([]);
 
+	let cards = $state<CardData[]>([]);
     let state = $state<CardData[]>([]);
 
 	let ruleSubmitted = $state(false);
@@ -50,6 +51,7 @@
 				}
 
 				if (msg.type === "updated") {
+					cards = msg.cards;
 					state = msg.state;
 					playerNames = msg.playerNames;
 					ruleSubmitted = msg.ruleSubmitted;

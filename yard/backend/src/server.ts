@@ -1,4 +1,5 @@
 import { WebSocketServer } from "ws";
+import type { Suit, Rank, CardData } from "../../frontend/src/lib/types/card.js";
 
 const wss = new WebSocketServer({port: 8080});
 
@@ -40,7 +41,9 @@ type Room = {
     roomId: string;
 	clients: Map<string, any>;
 	playerIds: string[];
-    players: BiMap<string, string>;
+    playerNames: BiMap<string, string>;
+    playerCards: Map<string, CardData[]>;
+    deck: CardData[];
 	yardmaster: string | null;
 	currentTurn: number;
 	state: any[];
@@ -56,11 +59,13 @@ function createRoom(playerId:string) {
         roomId: id,
 		clients: new Map(),
 		playerIds: [playerId],
-        players: (() => {
+        playerNames: (() => {
             const p = new BiMap<string, string>();
             p.set(playerId, "Yardmaster");
             return p;
         })(),
+        playerCards: new Map(),
+        deck: [],
 		yardmaster: playerId,
 		currentTurn: 0,
 		ruleCode: null,
@@ -126,33 +131,25 @@ wss.on("connection", (socket) => {
             }
             else if (!room.ruleSubmitted) {
                 role = "yarddog";
-                room.players.set(msg.playerId, "Yarddog " + room.playerIds.length);
+                room.playerNames.set(msg.playerId, "Yarddog " + room.playerIds.length);
                 room.playerIds.push(msg.playerId);
             }
 
-            console.log(room.players);
-            console.log(room.playerIds.map(id => room.players.get(id)));
+            console.log(room.playerNames);
+            console.log(room.playerIds.map(id => room.playerNames.get(id)));
 
             socket.send(
                 JSON.stringify({
                     type:"joined",
                     role,
-                    playerNames: room.playerIds.map(id => room.players.get(id)),
+                    playerNames: room.playerIds.map(id => room.playerNames.get(id)),
                     state: room.state,
                     ruleSubmitted: room.ruleSubmitted,
                     ruleCode: role === "yardmaster" ? room.ruleCode : null
                 })
             );
 
-            broadcast(
-                msg.roomId,
-                {
-                    type:"updated",
-                    playerNames: room.playerIds.map(id => room.players.get(id)),
-                    state: room.state,
-                    ruleSubmitted: room.ruleSubmitted
-                }
-            );
+            update(msg.roomId);
 
             return;
         }
@@ -168,15 +165,29 @@ wss.on("connection", (socket) => {
                 room.ruleSubmitted = true;
             }
 
-            broadcast(
-                msg.roomId,
-                {
-                    type:"updated",
-                    playerNames: room.playerIds.map(id => room.players.get(id)),
-                    state: room.state,
-                    ruleSubmitted: room.ruleSubmitted
+            const n = 7;
+            const suits: Suit[] = ["S", "H", "D", "C"];
+            const ranks: Rank[] = ["A", "2", "3", "4", "5", "6", "7", "8", "9", "0", "J", "Q", "K"];
+
+            // Create deck
+            for (const suit of suits) {
+                for (const rank of ranks) {
+                    room.deck.push({ suit, rank });
                 }
-            );
+            }
+
+            // Shuffle deck
+            for (let i=room.deck.length-1; i>0; i--) {
+                const j = Math.floor(Math.random() * (i+1));
+                [room.deck[i], room.deck[j]] = [room.deck[j], room.deck[i]];
+            }
+
+            // Deal cards
+            for (const playerId of room.playerIds) {
+                room.playerCards.set(playerId, room.deck.splice(0, n));
+            }
+
+            update(msg.roomId);
 
             return;
         }
@@ -187,7 +198,7 @@ wss.on("connection", (socket) => {
 
             if (!room) return;
 
-            const newYardmaster = room.players.getKey(msg.playerName)
+            const newYardmaster = room.playerNames.getKey(msg.playerName)
 
             if (msg.playerId === room.yardmaster && newYardmaster) {
                 room.yardmaster = newYardmaster;
@@ -196,7 +207,7 @@ wss.on("connection", (socket) => {
                     JSON.stringify({
                         type:"joined",
                         role:"yarddog",
-                        playerNames: room.playerIds.map(id => room.players.get(id)),
+                        playerNames: room.playerIds.map(id => room.playerNames.get(id)),
                         state: room.state,
                         ruleSubmitted: room.ruleSubmitted,
                         ruleCode: null
@@ -207,7 +218,7 @@ wss.on("connection", (socket) => {
                     JSON.stringify({
                         type:"joined",
                         role:"yardmaster",
-                        playerNames: room.playerIds.map(id => room.players.get(id)),
+                        playerNames: room.playerIds.map(id => room.playerNames.get(id)),
                         state: room.state,
                         ruleSubmitted: room.ruleSubmitted,
                         ruleCode: null
@@ -224,28 +235,20 @@ wss.on("connection", (socket) => {
 
             if (room.playerIds.includes(msg.playerId)) {
                 room.playerIds = room.playerIds.filter(id => id !== msg.playerId);
-                room.players.delete(msg.playerId);
+                room.playerNames.delete(msg.playerId);
 
                 socket.send(
                     JSON.stringify({
                         type:"joined",
                         role:"spectator",
-                        playerNames: room.playerIds.map(id => room.players.get(id)),
+                        playerNames: room.playerIds.map(id => room.playerNames.get(id)),
                         state: room.state,
                         ruleSubmitted: room.ruleSubmitted,
                         ruleCode: null
                     })
                 );
 
-                broadcast(
-                    msg.roomId,
-                    {
-                        type:"updated",
-                        playerNames: room.playerIds.map(id => room.players.get(id)),
-                        state: room.state,
-                        ruleSubmitted: room.ruleSubmitted
-                    }
-                );
+                update(msg.roomId);
             }
         }
 
@@ -256,29 +259,21 @@ wss.on("connection", (socket) => {
             if (!room) return;
 
             if (!room.playerIds.includes(msg.playerId)) {
-                room.players.set(msg.playerId, "Yarddog " + room.playerIds.length);
+                room.playerNames.set(msg.playerId, "Yarddog " + room.playerIds.length);
                 room.playerIds.push(msg.playerId);
 
                 socket.send(
                     JSON.stringify({
                         type:"joined",
                         role:"yarddog",
-                        playerNames: room.playerIds.map(id => room.players.get(id)),
+                        playerNames: room.playerIds.map(id => room.playerNames.get(id)),
                         state: room.state,
                         ruleSubmitted: room.ruleSubmitted,
                         ruleCode: null
                     })
                 );
 
-                broadcast(
-                    msg.roomId,
-                    {
-                        type:"updated",
-                        playerNames: room.playerIds.map(id => room.players.get(id)),
-                        state: room.state,
-                        ruleSubmitted: room.ruleSubmitted
-                    }
-                );
+                update(msg.roomId);
             }
         }
 
@@ -288,21 +283,13 @@ wss.on("connection", (socket) => {
 
             if (!room) return;
 
-            if (!Object.values(room.players).includes(msg.playerName) && ~msg.playerName.startsWith("Yarddog")) {
-                room.players.set(msg.playerId, msg.playerName);
+            if (!Object.values(room.playerNames).includes(msg.playerName) && ~msg.playerName.startsWith("Yarddog")) {
+                room.playerNames.set(msg.playerId, msg.playerName);
             } else {
                 console.log("Rejected duplicate name");
             }
 
-            broadcast(
-                msg.roomId,
-                {
-                    type:"updated",
-                    playerNames: room.playerIds.map(id => room.players.get(id)),
-                    state: room.state,
-                    ruleSubmitted: room.ruleSubmitted
-                }
-            );
+            update(msg.roomId);
         }
 
 		// Player plays a card
@@ -370,6 +357,26 @@ wss.on("connection", (socket) => {
     });
 
 });
+
+function update(
+	roomId: string
+) {
+    const room = rooms.get(roomId);
+
+	if (!room) return;
+
+    for (const playerId of room.playerIds) {
+        room.clients.get(playerId).send(
+            JSON.stringify({
+                type:"updated",
+                cards: room.playerCards.get(playerId),
+                playerNames: room.playerIds.map(id => room.playerNames.get(id)),
+                state: room.state,
+                ruleSubmitted: room.ruleSubmitted
+            })
+        );
+    }
+}
 
 function broadcast(
 	roomId: string,
