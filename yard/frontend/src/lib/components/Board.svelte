@@ -1,5 +1,5 @@
 <script lang="ts">
-	import type { CardData } from '$lib/types/card';
+	import type { CardData } from '../../../../shared';
 	import Card from '$lib/components/Card.svelte';
 	import '$lib/styles/board.css';
 

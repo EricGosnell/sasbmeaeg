@@ -1,4 +1,4 @@
-import type { CardData } from "./card";
+import type { CardData } from "../../../../shared";
 
 
 export type ClientMessage =

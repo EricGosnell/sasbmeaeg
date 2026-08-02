@@ -1,6 +1,6 @@
 <script lang="ts">
 	import Board from '$lib/components/Board.svelte';
-	import { generateDeck, cardBack } from '$lib/utils/cards';
+	import { generateDeck, cardBack } from '../../../../shared/src/utils/cards.ts';
 	import '$lib/styles/card.css';
 
 	const cards = generateDeck();

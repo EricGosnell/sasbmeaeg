@@ -3,8 +3,8 @@
 	import { onMount } from "svelte";
 	import { connect, send } from "$lib/client/gameClient";
 	import { evaluateRule } from "$lib/ruleClient";
-	import { cardImage } from "$lib/utils/cards";
-	import type { CardData } from "$lib/types/card";
+	import { generateDeck, cardImage } from "../../../../../shared/src/utils/cards.ts";
+	import type { CardData } from "../../../../../shared/src/types/card";
 
 	let worker: Worker | null = null;
 
