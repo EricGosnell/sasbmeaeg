@@ -3,120 +3,124 @@
 	import { onMount } from "svelte";
 	import { connect, send } from "$lib/client/gameClient";
 	import { evaluateRule } from "$lib/ruleClient";
+	import { generateDeck } from "$lib/utils/cards";
+	import type { CardData } from "$lib/types/card";
 
 	let worker: Worker | null = null;
 	let ruleCode = $state("");
 
 	let roomId = $state("");
-    let player = $state("");
+	let player = $state("");
 
-    let state = $state<any[]>([]);
-    let role = $state("");
-    let result = $state("");
+	let state = $state<any[]>([]);
+	let role = $state("");
+	let result = $state("");
 
 	let code = $state(`function rules(state) {
-		return suit(last(state)) == "Spades";
-	}`);
+       return suit(last(state)) == "Spades";
+    }`);
 
 	let ruleSubmitted = $state(false);
 
 	let pendingPlay = $state<any>(null);
 	let lastValidated = $state<string | null>(null);
 
+	const deck: CardData[] = generateDeck();
+
 	onMount(() => {
 		roomId = page.params.id;
 
 		player =
-			new URLSearchParams(
-				window.location.search
-			).get("player") ?? "";
+				new URLSearchParams(
+						window.location.search
+				).get("player") ?? "";
 
 		connect(
-			roomId,
-			player,
-			async (msg) => {
-
-				console.log(
-					"WebSocket message:",
-					msg
-				);
-
-				if (msg.type === "joined") {
-
-					role = msg.role;
-
-					state = msg.state;
-
-					pendingPlay = msg.pendingPlay;
-
-					ruleSubmitted = msg.ruleSubmitted;
-
-					if (role === "yardmaster") {
-						ruleCode = msg.ruleCode;
-					}
+				roomId,
+				player,
+				async (msg) => {
 
 					console.log(
-						"Joined as:",
-						role
+							"WebSocket message:",
+							msg
 					);
 
-				}
+					if (msg.type === "joined") {
+
+						role = msg.role;
+
+						state = msg.state;
+
+						pendingPlay = msg.pendingPlay;
+
+						ruleSubmitted = msg.ruleSubmitted;
+
+						if (role === "yardmaster") {
+							ruleCode = msg.ruleCode;
+						}
+
+						console.log(
+								"Joined as:",
+								role
+						);
+
+					}
 
 
-				if(msg.type === "pending_play") {
+					if(msg.type === "pending_play") {
 
-					if(role === "yardmaster") {
+						if(role === "yardmaster") {
 
 
-						const nextState = [
+							const nextState = [
+								...state,
+								msg.card
+							];
+
+
+							const plainState =
+									JSON.parse(
+											JSON.stringify(nextState)
+									);
+
+
+							const good =
+									await evaluateRule(
+											code,
+											plainState
+									);
+
+
+							send({
+								type:"validate",
+								roomId,
+								playerId:player,
+								good
+							});
+
+
+						}
+
+					}
+
+					if (msg.type === "result") {
+
+						state = [
 							...state,
-							msg.card
+							{
+								...msg.card,
+								good: msg.good
+							}
 						];
 
-
-						const plainState =
-							JSON.parse(
-								JSON.stringify(nextState)
-							);
-
-
-						const good =
-							await evaluateRule(
-								code,
-								plainState
-							);
-
-
-						send({
-							type:"validate",
-							roomId,
-							playerId:player,
-							good
-						});
-
+						result =
+								msg.good
+										? "Good"
+										: "Bad";
 
 					}
 
 				}
-
-				if (msg.type === "result") {
-
-					state = [
-						...state,
-						{
-							...msg.card,
-							good: msg.good
-						}
-					];
-
-					result =
-						msg.good
-							? "Good"
-							: "Bad";
-
-				}
-
-			}
 		);
 	});
 
@@ -138,13 +142,13 @@
 
 
 		worker = new Worker(
-			new URL(
-				"../../../lib/ruleWorker.ts",
-				import.meta.url
-			),
-			{
-				type:"module"
-			}
+				new URL(
+						"../../../lib/ruleWorker.ts",
+						import.meta.url
+				),
+				{
+					type:"module"
+				}
 		);
 	}
 
@@ -162,12 +166,12 @@
 
 				if(event.data.ok){
 					resolve(
-						event.data.result
+							event.data.result
 					);
 				}
 				else {
 					console.error(
-						event.data.error
+							event.data.error
 					);
 
 					resolve(false);
@@ -214,57 +218,48 @@
 
 
 <h1>
-Room {roomId}
+	Room {roomId}
 </h1>
 
 <p>
-Role: {role}
+	Role: {role}
 </p>
 
 {#if role === "yardmaster"}
 
-<h2>Your Secret Rule</h2>
+	<h2>Your Secret Rule</h2>
 
-<textarea
-	bind:value={code}
-	rows="10"
-	cols="60"
-	disabled={role === "yardmaster" && ruleSubmitted}
-></textarea>
+	<textarea
+			bind:value={code}
+			rows="10"
+			cols="60"
+			disabled={role === "yardmaster" && ruleSubmitted}
+	></textarea>
 
-<br>
+	<br>
 
-{#if !ruleSubmitted}
+	{#if !ruleSubmitted}
 
-<button onclick={submitRule}>
-	{ruleSubmitted ? "Rule Submitted" : "Submit Rule"}
-</button>
+		<button onclick={submitRule}>
+			{ruleSubmitted ? "Rule Submitted" : "Submit Rule"}
+		</button>
 
-{/if}
+	{/if}
 
 {/if}
 
 {#if role !== "spectator"}
 
-<button
-	disabled={role === "yardmaster" && !ruleSubmitted}
-	onclick={() => play({
-		rank:"A",
-		suit:"Spades"
-	})}
->
-	Up (Ace of Spades)
-</button>
+	{#each deck as card}
 
-<button
-	disabled={role === "yardmaster" && !ruleSubmitted}
-	onclick={() => play({
-		rank:"2",
-		suit:"Diamonds"
-	})}
->
-	Down (2 of Diamonds)
-</button>
+		<button
+				disabled={role === "yardmaster" && !ruleSubmitted}
+				onclick={() => play(card)}
+		>
+			{card.rank} of {card.suit}
+		</button>
+
+	{/each}
 
 {/if}
 
