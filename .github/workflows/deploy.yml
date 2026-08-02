@@ -14,16 +14,6 @@ jobs:
           username: ${{ secrets.SERVER_USER }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           script: |
-            cd /var/www/sasbmeaeg/yard
-
-            git pull
-
-            cd frontend
-            npm install
-            npm run build
-
-            cd ../backend
-            npm install
-            npm run build
-
-            pm2 restart yard-backend || pm2 start npm --name yard-backend -- start
+            cd /var/www/sasbmeaeg && git pull
+            cd yard/frontend && npm install && npm run build
+            cd /opt/containers/sasbmeaeg-backend && docker compose up -d --build

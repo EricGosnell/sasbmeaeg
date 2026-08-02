@@ -20,7 +20,7 @@ export default defineConfig({
 			adapter: adapter({
 				pages: 'build',
 				assets: 'build',
-				fallback: undefined
+				fallback: 'index.html'
 			})
 		})
 	]

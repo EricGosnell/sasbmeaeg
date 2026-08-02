@@ -12,7 +12,7 @@ export function connect(
 	onOpen?:()=>void
 ){
 	socket = new WebSocket(
-		"ws://localhost:8080"
+		`${location.protocol === "https:" ? "wss" : "ws"}://${location.host}/ws`
 	);
 
 	socket.onopen = ()=>{
@@ -30,7 +30,6 @@ export function connect(
 	socket.onmessage=(event)=>{
 		onMessage(JSON.parse(event.data));
 	};
-
 }
 
 export function send(
