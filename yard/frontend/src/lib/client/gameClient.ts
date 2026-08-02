@@ -15,7 +15,9 @@ export function connect(
 ){
 
 	socket = new WebSocket(
-		`${location.protocol === "https:" ? "wss" : "ws"}://${location.host}/ws`
+		import.meta.env.DEV
+			? "ws://localhost:8080"
+			: `wss://${location.host}/ws`
 	);
 
 
