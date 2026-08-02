@@ -3,7 +3,7 @@
 	import { onMount } from "svelte";
 	import { connect, send } from "$lib/client/gameClient";
 	import { evaluateRule } from "$lib/ruleClient";
-	import { generateDeck } from "$lib/utils/cards";
+	import { generateDeck, cardImage } from "$lib/utils/cards";
 	import type { CardData } from "$lib/types/card";
 
 	let worker: Worker | null = null;
@@ -263,16 +263,31 @@
 
 {/if}
 
-<ul>
+<div class="played-row">
 	{#each state as card}
-		<li>
-			{card.rank} of {card.suit}:
-		
-			{#if card.good}
-				Good
-			{:else}
-				Bad
-			{/if}
-		</li>
+		<img
+				class="played-card"
+				class:bad-offset={!card.good}
+				src={cardImage(card.rank, card.suit)}
+				alt="{card.rank} of {card.suit}"
+		/>
 	{/each}
-</ul>
+</div>
+
+<style>
+	.played-row {
+		display: flex;
+		flex-direction: row;
+		align-items: flex-end;
+		gap: 2px;
+		padding: 20px;
+	}
+
+	.played-card {
+		width: 80px;
+	}
+
+	.played-card.bad-offset {
+		transform: translateY(-18px);
+	}
+</style>
