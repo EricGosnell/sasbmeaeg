@@ -54,6 +54,8 @@ export function generateDeck(includeJokers = false): CardData[] {
 	return [...standardCards, ...jokers];
 }
 
+// TODO add more sophisticated shuffle here
+
 export function cardImage(rank: Rank, suit: Suit) {
 	if (rank === 'Joker1') return 'https://deckofcardsapi.com/static/img/X1.png';
 	if (rank === 'Joker2') return 'https://deckofcardsapi.com/static/img/X2.png';

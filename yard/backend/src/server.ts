@@ -1,5 +1,6 @@
 import { WebSocketServer } from "ws";
-import type { Suit, Rank, CardData } from "../../frontend/src/lib/types/card.js";
+import type { CardData } from "../../frontend/src/lib/types/card.js";
+import { generateDeck } from "../../frontend/src/lib/utils/cards.js";
 
 const wss = new WebSocketServer({port: 8080});
 
@@ -166,15 +167,11 @@ wss.on("connection", (socket) => {
             }
 
             const n = 7;
-            const suits: Suit[] = ["S", "H", "D", "C"];
-            const ranks: Rank[] = ["A", "2", "3", "4", "5", "6", "7", "8", "9", "0", "J", "Q", "K"];
+            const suits: Suit[] = ["Spades", "Hearts", "Diamonds", "Clubs"];
+            const ranks: Rank[] = ["A", "2", "3", "4", "5", "6", "7", "8", "9", "10", "J", "Q", "K"];
 
             // Create deck
-            for (const suit of suits) {
-                for (const rank of ranks) {
-                    room.deck.push({ suit, rank });
-                }
-            }
+            room.deck = generateDeck();
 
             // Shuffle deck
             for (let i=room.deck.length-1; i>0; i--) {
@@ -309,6 +306,19 @@ wss.on("connection", (socket) => {
                 return;
             }
 
+            const hand = room.playerCards.get(msg.playerId);
+
+            if (!hand || !hand?.some(card => card.suit === msg.card.suit && card.rank === msg.card.rank)) {
+                console.log(
+                    "Rejected invalid play from",
+                    msg.playerId, hand
+                );
+
+                return;
+            }
+
+            room.playerCards.set(msg.playerId, hand.filter(card => JSON.stringify(card) !== JSON.stringify(msg.card)));
+
             broadcast(
                 msg.roomId,
                 {
@@ -327,21 +337,28 @@ wss.on("connection", (socket) => {
 
             if (!room) return;
 
-            broadcast(
-                msg.roomId,
-                {
-                    type: "validated",
-                    card: msg.card,
-                    good: msg.good
-                }
-            );
-
             room.state.push({
                 ...msg.card,
                 good: msg.good
             });
 
+            // Player draws card if not good
+            if (!msg.good) {
+                const currentPlayer = room.playerIds[room.currentTurn];
+                const hand = room.playerCards.get(currentPlayer);
+                const card = room.deck.pop();
+
+                if (hand && card) {
+                    room.playerCards.set(currentPlayer, [
+                        ...hand,
+                        card
+                    ]);
+                }
+            }
+
             room.currentTurn = (room.currentTurn + 1) % room.playerIds.length;
+
+            update(msg.roomId);
 
             return;
         }

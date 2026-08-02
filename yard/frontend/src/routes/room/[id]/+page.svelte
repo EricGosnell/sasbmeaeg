@@ -3,7 +3,7 @@
 	import { onMount } from "svelte";
 	import { connect, send } from "$lib/client/gameClient";
 	import { evaluateRule } from "$lib/ruleClient";
-	import { generateDeck, cardImage } from "$lib/utils/cards";
+	import { cardImage } from "$lib/utils/cards";
 	import type { CardData } from "$lib/types/card";
 
 	let worker: Worker | null = null;
@@ -23,8 +23,6 @@
 	let code = $state(`function rules(state) {
 		return suit(last(state)) == "Spades";
 	}`);
-
-	const deck: CardData[] = generateDeck(true);
 
 	onMount(() => {
 		roomId = page.params.id;
@@ -56,6 +54,7 @@
 
 				if (msg.type === "updated") {
 					cards = msg.cards;
+					console.log(msg.cards);
 					state = msg.state;
 					playerNames = msg.playerNames;
 					ruleSubmitted = msg.ruleSubmitted;
@@ -76,16 +75,6 @@
 							good
 						});
 					}
-				}
-
-				if (msg.type === "validated") {
-					state = [
-						...state,
-						{
-							...msg.card,
-							good: msg.good
-						}
-					];
 				}
 			}
 		);
@@ -222,17 +211,6 @@
 
 {#if role !== "spectator"}
 
-	{#each deck as card}
-
-		<button
-				disabled={!ruleSubmitted}
-				onclick={() => play(card)}
-		>
-			{card.rank} of {card.suit}
-		</button>
-
-	{/each}
-
 <input
 	bind:value={playerName}
 	placeholder="Player Name"
@@ -248,6 +226,17 @@
 {/each}
 
 {/if}
+
+{#each cards as card}
+
+	<button
+			disabled={!ruleSubmitted}
+			onclick={() => play(card)}
+	>
+		{card.rank} of {card.suit}
+	</button>
+
+{/each}
 
 <div class="played-row">
 	{#each state as card}
