@@ -1,4 +1,4 @@
-import type { CardData, Rank, Suit } from '$lib/types/card';
+import type { CardData, Rank, Suit } from '../types/card';
 
 const suits: Suit[] = ['S', 'H', 'D', 'C'];
 const ranks: Rank[] = ['A', '2', '3', '4', '5', '6', '7', '8', '9', '0', 'J', 'Q', 'K'];
