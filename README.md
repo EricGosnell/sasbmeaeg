@@ -27,7 +27,7 @@ flipped face-up at the start.
 3. The secret ruleset must contain no more than 5 operations, where an operation is one of the following: Addition,
 subtraction, multiplication, modulus, validity. Exceptions can be made to this rule, as long as the secret ruleset is
 sufficiently simple. One example exception is "last 5 cards must be a better poker hand than before".
-4. TODO
+4. TODO 
 
 ## Existing Rulesets
 The best rulesets are simple yet creative. A Yardmaster who wishes to remain as such should aim to minimize the chance
