@@ -29,6 +29,15 @@ function runRule(
        	function sum(cards) {
           	return cards.reduce((total, card) => total + rank(card), 0);
        	}
+       	
+       	function product(cards) {
+        	return cards.reduce((total, card) => total * rank(card), 1);
+       	}
+
+       	function difference(cards) {
+        	if (cards.length === 0) return 0;
+        		return cards.slice(1).reduce((total, card) => total - rank(card), rank(cards[0]));
+       	}
 
 		function suit(card) {
 			return card.suit;
