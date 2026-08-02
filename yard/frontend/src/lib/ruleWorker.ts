@@ -13,6 +13,22 @@ function runRule(
 		function last(state) {
 			return state[state.length - 1];
 		}
+		
+		function last_n(n, predicate) {
+          const cards = state.slice(-n);
+          if (predicate) {
+             return cards.filter(predicate);
+          }
+          return cards;
+       	}
+       
+       	function last_n_matching(n, predicate) {
+			return state.filter(predicate).slice(-n);
+		}
+
+       	function sum(cards) {
+          	return cards.reduce((total, card) => total + rank(card), 0);
+       	}
 
 		function suit(card) {
 			return card.suit;
