@@ -5,6 +5,8 @@ COPY shared ./shared
 COPY backend/package*.json ./backend/
 RUN npm install
 COPY backend ./backend
+WORKDIR /app/shared
+RUN npm run build
 WORKDIR /app/backend
 RUN npm run build
 EXPOSE 8080
