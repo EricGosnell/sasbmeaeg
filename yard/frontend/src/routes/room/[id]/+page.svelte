@@ -41,40 +41,39 @@
 					msg
 				);
 
-				if (msg.type === "joined") {
-					role = msg.role;
-					state = msg.state;
-					playerNames = msg.playerNames;
+				switch (msg.type) {
+					case "joined":
+						role = msg.role;
+						state = msg.state;
+						playerNames = msg.playerNames;
 
-					ruleSubmitted = msg.ruleSubmitted;
-					if (role === "yardmaster") {
-						ruleCode = msg.ruleCode;
-					}
-				}
+						ruleSubmitted = msg.ruleSubmitted;
+						if (role === "yardmaster") {
+							ruleCode = msg.ruleCode;
+						}
+						break;
+					case "updated":
+						cards = msg.cards;
+						state = msg.state;
+						playerNames = msg.playerNames;
+						ruleSubmitted = msg.ruleSubmitted;
+						break;
+					case "evaluate":
+						if(role === "yardmaster") {
+							const good =
+								await evaluateRule(
+									code,
+									[...state, msg.card]
+								);
 
-				if (msg.type === "updated") {
-					cards = msg.cards;
-					console.log(msg.cards);
-					state = msg.state;
-					playerNames = msg.playerNames;
-					ruleSubmitted = msg.ruleSubmitted;
-				}
-
-				if(msg.type === "evaluate") {
-					if(role === "yardmaster") {
-						const good =
-							await evaluateRule(
-								code,
-								[...state, msg.card]
-							);
-
-						send({
-							type:"validate",
-							roomId,
-							card:msg.card,
-							good
-						});
-					}
+							send({
+								type: "validate",
+								roomId,
+								card:msg.card,
+								good
+							});
+						}
+						break;
 				}
 			}
 		);
@@ -85,7 +84,7 @@
 		ruleCode = code;
 
 		send({
-			type:"rule",
+			type: "rule",
 			roomId,
 			playerId,
 			code
@@ -105,7 +104,7 @@
 
 	async function yieldRule(){
 		send({
-			type:"yield",
+			type: "yield",
 			roomId,
 			playerId,
 			playerName
@@ -114,7 +113,7 @@
 
 	async function beSpectator(){
 		send({
-			type:"spectate",
+			type: "spectate",
 			roomId,
 			playerId
 		});
@@ -122,7 +121,7 @@
 
 	async function beYarddog(){
 		send({
-			type:"yarddog",
+			type: "yarddog",
 			roomId,
 			playerId
 		});
@@ -130,7 +129,7 @@
 
 	async function changeName(){
 		send({
-			type:"change",
+			type: "change",
 			roomId,
 			playerId,
 			playerName
@@ -139,7 +138,7 @@
 
 	async function play(card){
 		send({
-			type:"play",
+			type: "play",
 			roomId,
 			playerId,
 			card
@@ -220,12 +219,12 @@
 	Change Name
 </button>
 
+{/if}
+
 {#each playerNames as name}
 		<br>
 		{name}
 {/each}
-
-{/if}
 
 {#each cards as card}
 

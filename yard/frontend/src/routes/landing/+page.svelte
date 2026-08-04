@@ -10,7 +10,7 @@ async function createRoom(){
 		null,
 		playerId,
 		(msg)=>{
-			if(msg.type==="created"){
+			if (msg.type === "created") {
 				window.location.href =
 					"/room/" +
 					msg.roomId +
