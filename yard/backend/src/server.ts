@@ -1,6 +1,6 @@
 import { WebSocket, WebSocketServer } from "ws";
-import type { CardData } from "@sasbmeaeg/shared/src/types/card.js";
-import { generateDeck } from "@sasbmeaeg/shared/src/utils/cards.js";
+import type { CardData } from "@sasbmeaeg/shared";
+import { generateDeck } from "@sasbmeaeg/shared";
 
 const wss = new WebSocketServer({port: 8080});
 
