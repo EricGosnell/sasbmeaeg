@@ -1,6 +1,6 @@
 import { WebSocket, WebSocketServer } from "ws";
-import type { CardData } from "@sasbmeaeg/shared";
-import { generateDeck } from "@sasbmeaeg/shared";
+import type { CardData } from "@sasbmeaeg/shared/src/types/card.js";
+import { generateDeck } from "@sasbmeaeg/shared/src/utils/cards.js";
 
 const wss = new WebSocketServer({port: 8080});
 
@@ -341,6 +341,18 @@ wss.on("connection", (socket) => {
                         ]);
                     }
                 }
+                else {
+                    const currentPlayer = room.playerIds[room.currentTurn];
+                    const hand = room.playerCards.get(currentPlayer);
+                    
+                    if (hand && !hand.length) {
+                        room.clients.get(currentPlayer).send(
+                            JSON.stringify({
+                                type: "depleted"
+                            })
+                        );
+                    }
+                }
 
                 room.currentTurn = (room.currentTurn + 1) % room.playerIds.length;
 
@@ -373,6 +385,8 @@ function update(
                 type: "updated",
                 cards: room.playerCards.get(playerId),
                 playerNames: room.playerIds.map(id => room.playerNames.get(id)),
+                playerRoles: room.playerIds.map(id => room.playerRoles.get(id)),
+                playerCards: room.playerIds.map(id => room.playerCards.get(id)?.length),
                 state: room.state,
                 ruleSubmitted: room.ruleSubmitted
             })

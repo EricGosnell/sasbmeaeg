@@ -13,6 +13,8 @@
   	let role = $state("");
 	let playerName = $state("");
 	let playerNames = $state<string[]>([]);
+	let playerRoles = $state<string[]>([]);
+	let playerCards = $state<int[]>([]);
 
 	let cards = $state<CardData[]>([]);
     let state = $state<CardData[]>([]);
@@ -56,6 +58,8 @@
 						cards = msg.cards;
 						state = msg.state;
 						playerNames = msg.playerNames;
+						playerRoles = msg.playerRoles;
+						playerCards = msg.playerCards;
 						ruleSubmitted = msg.ruleSubmitted;
 						break;
 					case "evaluate":
@@ -221,29 +225,35 @@
 
 {/if}
 
-{#each playerNames as name}
+{#each playerNames as name, i}
 		<br>
-		{name}
+		{name}: {playerRoles[i]}, {playerCards[i]}
 {/each}
 
-{#each cards as card}
+<br>
 
-	<button
-			disabled={!ruleSubmitted}
-			onclick={() => play(card)}
-	>
-		{card.rank} of {card.suit}
-	</button>
-
-{/each}
+<div class="playing-row">
+	{#each cards as card}
+		<button
+				disabled={!ruleSubmitted}
+				onclick={() => play(card)}
+		>
+			<img
+				class="played-card"
+				src={cardImage(card.rank, card.suit)}
+				alt="{card.rank} of {card.suit}"
+			/>
+		</button>
+	{/each}
+</div>
 
 <div class="played-row">
 	{#each state as card}
 		<img
-				class="played-card"
-				class:bad-offset={!card.good}
-				src={cardImage(card.rank, card.suit)}
-				alt="{card.rank} of {card.suit}"
+			class="played-card"
+			class:bad-offset={!card.good}
+			src={cardImage(card.rank, card.suit)}
+			alt="{card.rank} of {card.suit}"
 		/>
 	{/each}
 </div>
