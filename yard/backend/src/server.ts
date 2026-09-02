@@ -63,7 +63,11 @@ type Room = {
 const rooms = new Map<string, Room>();
 
 function createRoom(playerId:string) {
-	const id = Math.random().toString(36).substring(2,8);
+    let id: string;
+    do {
+        id = Math.random().toString(36).substring(2, 8);
+    } while (rooms.has(id));
+
 	const room: Room = {
         roomId: id,
 		clients: new Map(),
@@ -145,6 +149,8 @@ wss.on("connection", (socket) => {
                         type: "joined",
                         role,
                         playerNames: room.playerIds.map(id => room.playerNames.get(id)),
+                        playerRoles: room.playerIds.map(id => room.playerRoles.get(id)),
+                        playerCards: room.playerIds.map(id => room.playerCards.get(id)?.length),
                         state: room.state,
                         ruleSubmitted: room.ruleSubmitted,
                         ruleCode: role === "yardmaster" ? room.ruleCode : null
@@ -277,11 +283,14 @@ wss.on("connection", (socket) => {
                 return;
             case "change":
                 // Player changes name
-                if (!Object.values(room.playerNames).includes(msg.playerName) && ~msg.playerName.startsWith("Yarddog")) {
-                    room.playerNames.set(msg.playerId, msg.playerName);
-                } else {
+                if (room.playerNames.getKey(msg.playerName) !== undefined) {
                     console.log("Rejected duplicate name");
                     return;
+                } else if (msg.playerName.length > 32) {
+                    console.log("Rejected long name");
+                    return;
+                } else {
+                    room.playerNames.set(msg.playerId, msg.playerName);
                 }
 
                 update(msg.roomId);
@@ -379,17 +388,22 @@ function update(
 
 	if (!room) return;
 
-    for (const playerId of room.playerIds) {
-        room.clients.get(playerId).send(
-            JSON.stringify({
-                type: "updated",
-                cards: room.playerCards.get(playerId),
-                playerNames: room.playerIds.map(id => room.playerNames.get(id)),
-                playerRoles: room.playerIds.map(id => room.playerRoles.get(id)),
-                playerCards: room.playerIds.map(id => room.playerCards.get(id)?.length),
-                state: room.state,
-                ruleSubmitted: room.ruleSubmitted
-            })
-        );
+    for (const [playerId, client] of room.clients) {
+        if (client.readyState !== WebSocket.OPEN) continue;
+
+        const message: any = {
+            type: "updated",
+            playerNames: room.playerIds.map(id => room.playerNames.get(id)),
+            playerRoles: room.playerIds.map(id => room.playerRoles.get(id)),
+            playerCards: room.playerIds.map(id => room.playerCards.get(id)?.length),
+            state: room.state,
+            ruleSubmitted: room.ruleSubmitted
+        };
+
+        if (room.playerIds.includes(playerId)) {
+            message.cards = room.playerCards.get(playerId);
+        }
+
+        client.send(JSON.stringify(message));
     }
 }

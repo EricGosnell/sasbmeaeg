@@ -27,14 +27,32 @@ async function createRoom(){
 	);
 }
 
-function joinRoom(){
+function joinRoom() {
+	if (!roomId.trim()) {
+		alert("Please enter a room ID");
+		return;
+	}
+	
 	const playerId = crypto.randomUUID();
 
-	window.location.href =
-		"/room/" +
-		roomId +
-		"?player=" +
-		playerId;
+	connect(
+		roomId,
+		playerId,
+		(msg) => {
+			if (msg.type === "error") {
+				alert(msg.message);
+				return;
+			}
+
+			if (msg.type === "joined") {
+				window.location.href =
+					"/room/" +
+					roomId +
+					"?player=" +
+					playerId;
+			}
+		}
+	);
 }
 
 </script>

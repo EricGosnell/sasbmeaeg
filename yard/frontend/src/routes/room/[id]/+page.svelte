@@ -48,6 +48,8 @@
 						role = msg.role;
 						state = msg.state;
 						playerNames = msg.playerNames;
+						playerRoles = msg.playerRoles;
+						playerCards = msg.playerCards;
 
 						ruleSubmitted = msg.ruleSubmitted;
 						if (role === "yardmaster") {
@@ -63,7 +65,7 @@
 						ruleSubmitted = msg.ruleSubmitted;
 						break;
 					case "evaluate":
-						if(role === "yardmaster") {
+						if (role === "yardmaster") {
 							const good =
 								await evaluateRule(
 									code,
@@ -78,6 +80,10 @@
 							});
 						}
 						break;
+					case "error":
+						if (msg.message == "Room does not exist") {
+							window.location.href = "../../landing/";
+						}
 				}
 			}
 		);
@@ -132,6 +138,11 @@
 	}
 
 	async function changeName(){
+		if (playerName.length > 32) {
+			alert("Name must be 32 characters or less");
+			return;
+		}
+		
 		send({
 			type: "change",
 			roomId,
