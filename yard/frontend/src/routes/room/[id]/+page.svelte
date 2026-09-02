@@ -82,7 +82,7 @@
 						break;
 					case "error":
 						if (msg.message == "Room does not exist") {
-							window.location.href = "../../landing/";
+							window.location.href = "../../";
 						}
 				}
 			}
@@ -142,7 +142,7 @@
 			alert("Name must be 32 characters or less");
 			return;
 		}
-		
+
 		send({
 			type: "change",
 			roomId,
