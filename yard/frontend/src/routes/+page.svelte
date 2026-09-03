@@ -5,8 +5,8 @@ import "$lib/styles/landing.css";
 let playerName = $state("");
 let roomId = $state("");
 
-let selectedColor = $state(0);
-let selectedEyes = $state(0);
+let selectedColor = $state(2);
+let selectedEyes = $state(2);
 let selectedMouth = $state(0);
 
 const colors = [
@@ -119,11 +119,10 @@ function joinRoom() {
 
 		<div class="actions">
 			<div class="name-row">
-				<label for="playerName">Player Name:</label>
 				<input
 					id="playerName"
 					bind:value={playerName}
-					placeholder="Random Name"
+					placeholder="Enter Your Name"
 				/>
 			</div>
 
@@ -139,7 +138,7 @@ function joinRoom() {
 					onclick={() => selectedColor = (selectedColor - 1 + colors.length) % colors.length}
 					aria-label="Previous color"
 				>
-					←
+					‹
 				</button>
 
 				<div class="character-preview">
@@ -150,9 +149,9 @@ function joinRoom() {
 						aria-label="Character preview"
 					>
 						<path
-							d="M45 175
-								C48 145 62 128 80 128
-								C98 128 112 145 115 175
+							d="M40 175
+								C43 145 60 128 80 128
+								C100 128 117 145 120 175
 								Z"
 							fill={colors[selectedColor].body}
 							stroke="#090d18"
@@ -216,7 +215,7 @@ function joinRoom() {
 					onclick={() => selectedColor = (selectedColor + 1) % colors.length}
 					aria-label="Next color"
 				>
-					→
+					›
 				</button>
 
 				<div class="character-label eyes-label">
@@ -229,7 +228,7 @@ function joinRoom() {
 					onclick={() => selectedEyes = (selectedEyes - 1 + eyes.length) % eyes.length}
 					aria-label="Previous eyes"
 				>
-					←
+					‹
 				</button>
 
 				<button
@@ -238,7 +237,7 @@ function joinRoom() {
 					onclick={() => selectedEyes = (selectedEyes + 1) % eyes.length}
 					aria-label="Next eyes"
 				>
-					→
+					›
 				</button>
 
 				<div class="character-label mouth-label">
@@ -251,7 +250,7 @@ function joinRoom() {
 					onclick={() => selectedMouth = (selectedMouth - 1 + mouths.length) % mouths.length}
 					aria-label="Previous mouth"
 				>
-					←
+					‹
 				</button>
 
 				<button
@@ -260,10 +259,12 @@ function joinRoom() {
 					onclick={() => selectedMouth = (selectedMouth + 1) % mouths.length}
 					aria-label="Next mouth"
 				>
-					→
+					›
 				</button>
 
 			</div>
+
+			<p></p>
 
 			<button class="primary" onclick={createRoom}>
 				Create Room
