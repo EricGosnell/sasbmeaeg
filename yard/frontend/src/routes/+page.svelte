@@ -1,5 +1,6 @@
 <script lang="ts">
 import { connect, send } from "$lib/client/gameClient.js";
+import CharacterFeatures from "$lib/components/CharacterFeatures.svelte";
 import "$lib/styles/landing.css";
 
 let playerName = $state("");
@@ -14,19 +15,76 @@ const colors = [
 	{ name: "Blue", head: "#168cff", body: "#0874d9" },
 	{ name: "Green", head: "#06d6a0", body: "#05b889" },
 	{ name: "Red", head: "#ef476f", body: "#d9365e" },
-	{ name: "Yellow", head: "#ffd166", body: "#e6b94f" }
+	{ name: "Yellow", head: "#ffd166", body: "#e6b94f" },
+	{ name: "Orange", head: "#ff8c42", body: "#e66f26" },
+	{ name: "Pink", head: "#ff5ca8", body: "#e6428b" },
+	{ name: "Cyan", head: "#22d3ee", body: "#0ea5c9" },
+	{ name: "Teal", head: "#14b8a6", body: "#0f9488" },
+	{ name: "Lime", head: "#a3e635", body: "#7fbd24" },
+	{ name: "Gold", head: "#fbbf24", body: "#d99a12" },
+	{ name: "Coral", head: "#ff6b6b", body: "#e94f4f" },
+	{ name: "Lavender", head: "#c084fc", body: "#a855f7" },
+	{ name: "Mint", head: "#6ee7b7", body: "#34c995" },
+	{ name: "Sky", head: "#38bdf8", body: "#199bd1" },
+	{ name: "White", head: "#f5f1e6", body: "#d8d2c0" },
+	{ name: "Black", head: "#343a40", body: "#212529" }
 ];
 
 const eyes = [
 	"Dot",
 	"Sleepy",
-	"Big"
+	"Big",
+	"Wide",
+	"Angry",
+	"Cross-Eyed",
+	"Starry",
+	"Laser",
+	"Monocle",
+	"Glasses",
+	"Shades",
+	"Heart",
+	"X",
+	"Spiral",
+	"Suspicious",
+	"Robot",
+	"Googly",
+	"Anime",
+	"Closed",
+	"One-Eyed",
+	"Three-Eyed",
+	"Alien"
 ];
 
 const mouths = [
 	"Smile",
 	"Flat",
-	"Happy"
+	"Happy",
+	"Open",
+	"Frown",
+	"Grin",
+	"Teeth",
+	"Fang",
+	"Vampire",
+	"Mustache",
+	"Big Mustache",
+	"Handlebar",
+	"Pipe",
+	"Goatee",
+	"Beard",
+	"Goofy",
+	"Surprised",
+	"Yell",
+	"Whistle",
+	"Cat",
+	"Duck",
+	"Robot",
+	"Money",
+	"Tongue",
+	"Derp",
+	"UwU",
+	"Evil",
+	"Clown",
+	"Monocle Mustache"
 ];
 
 function getCharacter() {
@@ -168,44 +226,10 @@ function joinRoom() {
 							stroke-width="7"
 						/>
 
-						{#if selectedEyes === 0}
-							<circle cx="60" cy="68" r="7" fill="#090d18" />
-							<circle cx="100" cy="68" r="7" fill="#090d18" />
-						{:else if selectedEyes === 1}
-							<rect x="52" y="62" width="16" height="8" rx="4" fill="#090d18" />
-							<rect x="92" y="62" width="16" height="8" rx="4" fill="#090d18" />
-						{:else if selectedEyes === 2}
-							<circle cx="60" cy="68" r="10" fill="#090d18" />
-							<circle cx="100" cy="68" r="10" fill="#090d18" />
-							<circle cx="63" cy="65" r="3" fill="white" />
-							<circle cx="103" cy="65" r="3" fill="white" />
-						{/if}
-
-						{#if selectedMouth === 0}
-							<path
-								d="M65 94 Q80 103 95 94"
-								fill="none"
-								stroke="#090d18"
-								stroke-width="6"
-								stroke-linecap="round"
-							/>
-						{:else if selectedMouth === 1}
-							<path
-								d="M65 96 L95 96"
-								fill="none"
-								stroke="#090d18"
-								stroke-width="6"
-								stroke-linecap="round"
-							/>
-						{:else if selectedMouth === 2}
-							<path
-								d="M65 94 Q80 108 95 94"
-								fill="none"
-								stroke="#090d18"
-								stroke-width="6"
-								stroke-linecap="round"
-							/>
-						{/if}
+						<CharacterFeatures
+							eyes={eyes[selectedEyes]}
+							mouth={mouths[selectedMouth]}
+						/>
 					</svg>
 				</div>
 
