@@ -12,6 +12,8 @@
   	let playerId = $state("");
   	let role = $state("");
 	let playerName = $state("");
+	let playerCharacter = $state("");
+	let playerColor = $state("");
 	let playerNames = $state<string[]>([]);
 	let playerRoles = $state<string[]>([]);
 	let playerCards = $state<int[]>([]);
@@ -31,6 +33,8 @@
 
 		playerId = sessionStorage.getItem("playerId");
 		playerName = sessionStorage.getItem("playerName");
+		playerCharacter = sessionStorage.getItem("playerCharacter");
+		playerColor = sessionStorage.getItem("playerColor");
 
 		connect(
 			async (msg) => {
@@ -45,7 +49,9 @@
 							type: "join",
 							roomId,
 							playerId,
-							playerName
+							playerName,
+							playerCharacter,
+							playerColor
 						});
 						break;
 					case "joined":
@@ -103,7 +109,9 @@
 						type: "join",
 						roomId,
 						playerId,
-						playerName
+						playerName,
+						playerCharacter,
+						playerColor
 					});
 				}
 			}

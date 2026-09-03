@@ -5,8 +5,56 @@ import "$lib/styles/landing.css";
 let playerName = $state("");
 let roomId = $state("");
 
-async function createRoom(){
+const characters = ["🧑", "🤠", "😎", "🤓", "🥸", "👻", "🤖", "👽"];
+const colors = [
+	"#ef476f",
+	"#ffd166",
+	"#06d6a0",
+	"#118ab2",
+	"#9b5de5",
+	"#f78c6b",
+	"#90be6d",
+	"#f15bb5"
+];
+
+let characterIndex = $state(0);
+let colorIndex = $state(0);
+
+const selectedCharacter = $derived(characters[characterIndex]);
+const selectedColor = $derived(colors[colorIndex]);
+
+function previousCharacter() {
+	characterIndex =
+		(characterIndex - 1 + characters.length) % characters.length;
+}
+
+function nextCharacter() {
+	characterIndex = (characterIndex + 1) % characters.length;
+}
+
+function previousColor() {
+	colorIndex =
+		(colorIndex - 1 + colors.length) % colors.length;
+}
+
+function nextColor() {
+	colorIndex = (colorIndex + 1) % colors.length;
+}
+
+function savePlayer() {
 	const playerId = crypto.randomUUID();
+
+	sessionStorage.setItem("playerId", playerId);
+	sessionStorage.setItem("playerName", playerName);
+	sessionStorage.setItem("playerCharacter", selectedCharacter);
+	sessionStorage.setItem("playerColor", selectedColor);
+
+	return playerId;
+}
+
+
+async function createRoom(){
+	const playerId = savePlayer();
 
 	sessionStorage.setItem("playerId", playerId);
 	sessionStorage.setItem("playerName", playerName);
@@ -22,7 +70,10 @@ async function createRoom(){
 		()=>{
 			send({
 				type:"create",
-				playerId
+				playerId,
+				playerName,
+				playerCharacter: selectedCharacter,
+				playerColor: selectedColor
 			});
 		}
 	);
@@ -34,10 +85,7 @@ function joinRoom() {
 		return;
 	}
 
-	const playerId = crypto.randomUUID();
-
-	sessionStorage.setItem("playerId", playerId);
-	sessionStorage.setItem("playerName", playerName);
+	const playerId = savePlayer();
 
 	connect(
 		(msg) => {
@@ -80,7 +128,6 @@ function joinRoom() {
 		<p class="tagline">Sequences and Series by Max Eaton and Eric Gosnell</p>
 
 		<div class="actions">
-
 			<div class="name-row">
 				<label for="playerName">Player Name:</label>
 				<input
@@ -88,6 +135,64 @@ function joinRoom() {
 					bind:value={playerName}
 					placeholder="Random Name"
 				/>
+			</div>
+
+			<div class="customization">
+				<div class="picker">
+					<label>Character</label>
+
+					<div class="carousel">
+						<button
+							class="carousel-arrow"
+							aria-label="Previous character"
+							onclick={previousCharacter}
+						>
+							‹
+						</button>
+
+						<div
+							class="character-preview"
+							style={`--player-color: ${selectedColor}`}
+						>
+							<span>{selectedCharacter}</span>
+						</div>
+
+						<button
+							class="carousel-arrow"
+							aria-label="Next character"
+							onclick={nextCharacter}
+						>
+							›
+						</button>
+					</div>
+				</div>
+
+				<div class="picker">
+					<label>Color</label>
+
+					<div class="carousel">
+						<button
+							class="carousel-arrow"
+							aria-label="Previous color"
+							onclick={previousColor}
+						>
+							‹
+						</button>
+
+						<div
+							class="color-preview"
+							style={`--player-color: ${selectedColor}`}
+						></div>
+
+						<button
+							class="carousel-arrow"
+							aria-label="Next color"
+							onclick={nextColor}
+						>
+							›
+						</button>
+					</div>
+				</div>
 			</div>
 
 			<button class="primary" onclick={createRoom}>

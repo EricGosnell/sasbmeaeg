@@ -45,12 +45,18 @@ class BiMap<K extends string, V extends string> {
     }
 }
 
+type PlayerAppearance = {
+	character: string;
+	color: string;
+};
+
 type Room = {
     roomId: string;
 	clients: Map<string, any>;
 	playerIds: Set<string>;
     playerNames: BiMap<string, string>;
     playerRoles: Map<string, string>;
+    playerAppearance: Map<string, PlayerAppearance>;
     playerCards: Map<string, CardData[]>;
     playerOrder: string[];
     deck: CardData[];
@@ -81,6 +87,7 @@ function createRoom(playerId:string) {
         playerRoles: new Map([
             [playerId, "yardmaster"]
         ]),
+        playerAppearance: new Map(),
         playerCards: new Map(),
         playerOrder: [],
         deck: [],
@@ -122,6 +129,16 @@ wss.on("connection", (socket) => {
             case "create":
                 // Player creates room
                 room.clients.set(msg.playerId, socket);
+
+                room.playerNames.set(
+                    msg.playerId,
+                    msg.playerName || "Yardmaster"
+                );
+
+                room.playerAppearance.set(msg.playerId, {
+                    character: msg.playerCharacter,
+                    color: msg.playerColor
+                });
 
                 socket.send(
                     JSON.stringify({
@@ -170,6 +187,10 @@ wss.on("connection", (socket) => {
 
                 room.playerNames.set(msg.playerId, msg.playerName);
                 room.playerRoles.set(msg.playerId, role);
+                room.playerAppearance.set(msg.playerId, {
+                    character: msg.playerCharacter,
+                    color: msg.playerColor
+                });
 
                 socket.send(
                     JSON.stringify({
@@ -178,6 +199,7 @@ wss.on("connection", (socket) => {
                         playerNames: [...room.playerIds].map(id => room.playerNames.get(id)),
                         playerRoles: [...room.playerIds].map(id => room.playerRoles.get(id)),
                         playerCards: [...room.playerIds].map(id => room.playerCards.get(id)?.length),
+                        playerAppearance: Object.fromEntries(room.playerAppearance),
                         state: room.state,
                         ruleSubmitted: room.ruleSubmitted,
                         ruleCode: role === "yardmaster" ? room.ruleCode : null
@@ -415,6 +437,7 @@ function update(
             playerNames: [...room.playerIds].map(id => room.playerNames.get(id)),
             playerRoles: [...room.playerIds].map(id => room.playerRoles.get(id)),
             playerCards: [...room.playerIds].map(id => room.playerCards.get(id)?.length),
+            playerAppearance: Object.fromEntries(room.playerAppearance),
             state: room.state,
             ruleSubmitted: room.ruleSubmitted
         };
