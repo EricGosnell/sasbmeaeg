@@ -11,6 +11,40 @@ declare module "ws" {
     }
 }
 
+type CharacterData = {
+    color: string;
+    eyes: string;
+    mouth: string;
+};
+
+const defaultCharacter: CharacterData = {
+    color: "Purple",
+    eyes: "Dot",
+    mouth: "Smile"
+};
+
+function normalizeCharacter(character: any): CharacterData {
+    if (!character) {
+        return {...defaultCharacter};
+    }
+
+    const validColors = ["Purple", "Blue", "Green", "Red", "Yellow"];
+    const validEyes = ["Dot", "Sleepy", "Big"];
+    const validMouths = ["Smile", "Flat", "Happy"];
+
+    return {
+        color: validColors.includes(character.color)
+            ? character.color
+            : defaultCharacter.color,
+        eyes: validEyes.includes(character.eyes)
+            ? character.eyes
+            : defaultCharacter.eyes,
+        mouth: validMouths.includes(character.mouth)
+            ? character.mouth
+            : defaultCharacter.mouth
+    };
+}
+
 class BiMap<K extends string, V extends string> {
 	private forward = new Map<K, V>();
 	private reverse = new Map<V, K>();
@@ -50,6 +84,7 @@ type Room = {
 	clients: Map<string, any>;
 	playerIds: Set<string>;
     playerNames: BiMap<string, string>;
+    playerCharacters: Map<string, CharacterData>;
     playerRoles: Map<string, string>;
     playerCards: Map<string, CardData[]>;
     playerOrder: string[];
@@ -63,7 +98,7 @@ type Room = {
 
 const rooms = new Map<string, Room>();
 
-function createRoom(playerId:string) {
+function createRoom(playerId:string, character?: CharacterData) {
     let id: string;
     do {
         id = Math.random().toString(36).substring(2, 8);
@@ -78,6 +113,9 @@ function createRoom(playerId:string) {
             p.set(playerId, "Yardmaster");
             return p;
         })(),
+        playerCharacters: new Map([
+            [playerId, normalizeCharacter(character)]
+        ]),
         playerRoles: new Map([
             [playerId, "yardmaster"]
         ]),
@@ -102,7 +140,7 @@ wss.on("connection", (socket) => {
 		const msg = JSON.parse(raw.toString());
 
         const room = msg.type === 'create'
-            ? createRoom(msg.playerId)
+            ? createRoom(msg.playerId, msg.character)
             : rooms.get(msg.roomId);
 
         if (!room) {
@@ -122,6 +160,10 @@ wss.on("connection", (socket) => {
             case "create":
                 // Player creates room
                 room.clients.set(msg.playerId, socket);
+                room.playerCharacters.set(
+                    msg.playerId,
+                    normalizeCharacter(msg.character)
+                );
 
                 socket.send(
                     JSON.stringify({
@@ -169,6 +211,10 @@ wss.on("connection", (socket) => {
                 }
 
                 room.playerNames.set(msg.playerId, msg.playerName);
+                room.playerCharacters.set(
+                    msg.playerId,
+                    normalizeCharacter(msg.character)
+                );
                 room.playerRoles.set(msg.playerId, role);
 
                 socket.send(
@@ -176,6 +222,7 @@ wss.on("connection", (socket) => {
                         type: "joined",
                         role,
                         playerNames: [...room.playerIds].map(id => room.playerNames.get(id)),
+                        playerCharacters: [...room.playerIds].map(id => room.playerCharacters.get(id)),
                         playerRoles: [...room.playerIds].map(id => room.playerRoles.get(id)),
                         playerCards: [...room.playerIds].map(id => room.playerCards.get(id)?.length),
                         state: room.state,
@@ -246,6 +293,8 @@ wss.on("connection", (socket) => {
                         type: "joined",
                         role: "yarddog",
                         playerNames: [...room.playerIds].map(id => room.playerNames.get(id)),
+                        playerCharacters: [...room.playerIds].map(id => room.playerCharacters.get(id)),
+                        playerRoles: [...room.playerIds].map(id => room.playerRoles.get(id)),
                         state: room.state,
                         ruleSubmitted: room.ruleSubmitted,
                         ruleCode: null
@@ -257,6 +306,8 @@ wss.on("connection", (socket) => {
                         type: "joined",
                         role: "yardmaster",
                         playerNames: [...room.playerIds].map(id => room.playerNames.get(id)),
+                        playerCharacters: [...room.playerIds].map(id => room.playerCharacters.get(id)),
+                        playerRoles: [...room.playerIds].map(id => room.playerRoles.get(id)),
                         state: room.state,
                         ruleSubmitted: room.ruleSubmitted,
                         ruleCode: null
@@ -283,6 +334,8 @@ wss.on("connection", (socket) => {
                         type: "joined",
                         role: "spectator",
                         playerNames: [...room.playerIds].map(id => room.playerNames.get(id)),
+                        playerCharacters: [...room.playerIds].map(id => room.playerCharacters.get(id)),
+                        playerRoles: [...room.playerIds].map(id => room.playerRoles.get(id)),
                         state: room.state,
                         ruleSubmitted: room.ruleSubmitted,
                         ruleCode: null
@@ -306,6 +359,8 @@ wss.on("connection", (socket) => {
                         type: "joined",
                         role: "yarddog",
                         playerNames: [...room.playerIds].map(id => room.playerNames.get(id)),
+                        playerCharacters: [...room.playerIds].map(id => room.playerCharacters.get(id)),
+                        playerRoles: [...room.playerIds].map(id => room.playerRoles.get(id)),
                         state: room.state,
                         ruleSubmitted: room.ruleSubmitted,
                         ruleCode: null
@@ -413,6 +468,7 @@ function update(
         const message: any = {
             type: "updated",
             playerNames: [...room.playerIds].map(id => room.playerNames.get(id)),
+            playerCharacters: [...room.playerIds].map(id => room.playerCharacters.get(id)),
             playerRoles: [...room.playerIds].map(id => room.playerRoles.get(id)),
             playerCards: [...room.playerIds].map(id => room.playerCards.get(id)?.length),
             state: room.state,
