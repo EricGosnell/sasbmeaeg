@@ -95,6 +95,12 @@ function getCharacter() {
 	};
 }
 
+function randomizeCharacter() {
+	selectedColor = Math.floor(Math.random() * colors.length);
+	selectedEyes = Math.floor(Math.random() * eyes.length);
+	selectedMouth = Math.floor(Math.random() * mouths.length);
+}
+
 function savePlayer() {
 	sessionStorage.setItem("playerName", playerName);
 	sessionStorage.setItem("playerCharacter", JSON.stringify(getCharacter()));
@@ -240,6 +246,41 @@ function joinRoom() {
 					aria-label="Next color"
 				>
 					›
+				</button>
+
+				<button
+					class="randomize-button"
+					type="button"
+					onclick={randomizeCharacter}
+					aria-label="Randomize character"
+				>
+					<svg
+						viewBox="0 0 48 48"
+						width="30"
+						height="30"
+						aria-hidden="true"
+					>
+						<path
+							d="M24 4 L42 14 L24 24 L6 14 Z"
+							fill="#f5f1e6"
+						/>
+						<path
+							d="M6 14 L24 24 L24 44 L6 34 Z"
+							fill="#d8d2c0"
+						/>
+						<path
+							d="M42 14 L24 24 L24 44 L42 34 Z"
+							fill="#aaa493"
+						/>
+						<circle cx="15" cy="29" r="2.5" fill="#1b3a2f" />
+						<circle cx="30" cy="31" r="2.5" fill="#1b3a2f" />
+						<circle cx="37" cy="28" r="2.5" fill="#1b3a2f" />
+						<circle cx="24" cy="9" r="2.5" fill="#1b3a2f" />
+						<circle cx="34" cy="14" r="2.5" fill="#1b3a2f" />
+						<circle cx="14" cy="14" r="2.5" fill="#1b3a2f" />
+						<circle cx="24" cy="18" r="2.5" fill="#1b3a2f" />
+
+					</svg>
 				</button>
 
 				<div class="character-label eyes-label">

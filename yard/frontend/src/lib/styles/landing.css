@@ -296,3 +296,30 @@ button:hover {
 		left: calc(50% + 50px);
 	}
 }
+
+.randomize-button {
+	position: absolute;
+	left: calc(50% + 140px);
+	top: 23px;
+	width: 40px;
+	height: 40px;
+	padding: 0;
+	border-radius: 50%;
+	background: rgba(245, 241, 230, 0.12);
+	color: #f5f1e6;
+	border: none;
+	box-shadow: none;
+	font-size: 1.4rem;
+	line-height: 1;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	z-index: 1;
+}
+
+.randomize-button:hover {
+	transform: scale(1.08);
+	background: rgba(6, 214, 160, 0.2);
+	border-color: #06d6a0;
+}
+
