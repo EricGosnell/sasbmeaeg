@@ -5,59 +5,48 @@ import "$lib/styles/landing.css";
 let playerName = $state("");
 let roomId = $state("");
 
-const characters = ["🧑", "🤠", "😎", "🤓", "🥸", "👻", "🤖", "👽"];
+let selectedColor = $state(0);
+let selectedEyes = $state(0);
+let selectedMouth = $state(0);
+
 const colors = [
-	"#ef476f",
-	"#ffd166",
-	"#06d6a0",
-	"#118ab2",
-	"#9b5de5",
-	"#f78c6b",
-	"#90be6d",
-	"#f15bb5"
+	{ name: "Purple", head: "#b000ff", body: "#a000e8" },
+	{ name: "Blue", head: "#168cff", body: "#0874d9" },
+	{ name: "Green", head: "#06d6a0", body: "#05b889" },
+	{ name: "Red", head: "#ef476f", body: "#d9365e" },
+	{ name: "Yellow", head: "#ffd166", body: "#e6b94f" }
 ];
 
-let characterIndex = $state(0);
-let colorIndex = $state(0);
+const eyes = [
+	"Dot",
+	"Sleepy",
+	"Big"
+];
 
-const selectedCharacter = $derived(characters[characterIndex]);
-const selectedColor = $derived(colors[colorIndex]);
+const mouths = [
+	"Smile",
+	"Flat",
+	"Happy"
+];
 
-function previousCharacter() {
-	characterIndex =
-		(characterIndex - 1 + characters.length) % characters.length;
-}
-
-function nextCharacter() {
-	characterIndex = (characterIndex + 1) % characters.length;
-}
-
-function previousColor() {
-	colorIndex =
-		(colorIndex - 1 + colors.length) % colors.length;
-}
-
-function nextColor() {
-	colorIndex = (colorIndex + 1) % colors.length;
+function getCharacter() {
+	return {
+		color: colors[selectedColor].name,
+		eyes: eyes[selectedEyes],
+		mouth: mouths[selectedMouth]
+	};
 }
 
 function savePlayer() {
+	sessionStorage.setItem("playerName", playerName);
+	sessionStorage.setItem("playerCharacter", JSON.stringify(getCharacter()));
+}
+
+async function createRoom(){
 	const playerId = crypto.randomUUID();
 
 	sessionStorage.setItem("playerId", playerId);
-	sessionStorage.setItem("playerName", playerName);
-	sessionStorage.setItem("playerCharacter", selectedCharacter);
-	sessionStorage.setItem("playerColor", selectedColor);
-
-	return playerId;
-}
-
-
-async function createRoom(){
-	const playerId = savePlayer();
-
-	sessionStorage.setItem("playerId", playerId);
-	sessionStorage.setItem("playerName", playerName);
+	savePlayer();
 
 	connect(
 		(msg)=>{
@@ -71,9 +60,7 @@ async function createRoom(){
 			send({
 				type:"create",
 				playerId,
-				playerName,
-				playerCharacter: selectedCharacter,
-				playerColor: selectedColor
+				character: getCharacter()
 			});
 		}
 	);
@@ -85,7 +72,10 @@ function joinRoom() {
 		return;
 	}
 
-	const playerId = savePlayer();
+	const playerId = crypto.randomUUID();
+
+	sessionStorage.setItem("playerId", playerId);
+	savePlayer();
 
 	connect(
 		(msg) => {
@@ -137,62 +127,142 @@ function joinRoom() {
 				/>
 			</div>
 
-			<div class="customization">
-				<div class="picker">
-					<label>Character</label>
+			<div class="character-picker">
 
-					<div class="carousel">
-						<button
-							class="carousel-arrow"
-							aria-label="Previous character"
-							onclick={previousCharacter}
-						>
-							‹
-						</button>
-
-						<div
-							class="character-preview"
-							style={`--player-color: ${selectedColor}`}
-						>
-							<span>{selectedCharacter}</span>
-						</div>
-
-						<button
-							class="carousel-arrow"
-							aria-label="Next character"
-							onclick={nextCharacter}
-						>
-							›
-						</button>
-					</div>
+				<div class="character-label color-label">
+					Color
 				</div>
 
-				<div class="picker">
-					<label>Color</label>
+				<button
+					class="carousel-arrow color-left"
+					type="button"
+					onclick={() => selectedColor = (selectedColor - 1 + colors.length) % colors.length}
+					aria-label="Previous color"
+				>
+					←
+				</button>
 
-					<div class="carousel">
-						<button
-							class="carousel-arrow"
-							aria-label="Previous color"
-							onclick={previousColor}
-						>
-							‹
-						</button>
+				<div class="character-preview">
+					<svg
+						viewBox="0 0 160 180"
+						class="character"
+						role="img"
+						aria-label="Character preview"
+					>
+						<path
+							d="M45 175
+								C48 145 62 128 80 128
+								C98 128 112 145 115 175
+								Z"
+							fill={colors[selectedColor].body}
+							stroke="#090d18"
+							stroke-width="7"
+							stroke-linejoin="round"
+						/>
 
-						<div
-							class="color-preview"
-							style={`--player-color: ${selectedColor}`}
-						></div>
+						<circle
+							cx="80"
+							cy="75"
+							r="52"
+							fill={colors[selectedColor].head}
+							stroke="#090d18"
+							stroke-width="7"
+						/>
 
-						<button
-							class="carousel-arrow"
-							aria-label="Next color"
-							onclick={nextColor}
-						>
-							›
-						</button>
-					</div>
+						{#if selectedEyes === 0}
+							<circle cx="60" cy="68" r="7" fill="#090d18" />
+							<circle cx="100" cy="68" r="7" fill="#090d18" />
+						{:else if selectedEyes === 1}
+							<rect x="52" y="62" width="16" height="8" rx="4" fill="#090d18" />
+							<rect x="92" y="62" width="16" height="8" rx="4" fill="#090d18" />
+						{:else if selectedEyes === 2}
+							<circle cx="60" cy="68" r="10" fill="#090d18" />
+							<circle cx="100" cy="68" r="10" fill="#090d18" />
+							<circle cx="63" cy="65" r="3" fill="white" />
+							<circle cx="103" cy="65" r="3" fill="white" />
+						{/if}
+
+						{#if selectedMouth === 0}
+							<path
+								d="M65 94 Q80 103 95 94"
+								fill="none"
+								stroke="#090d18"
+								stroke-width="6"
+								stroke-linecap="round"
+							/>
+						{:else if selectedMouth === 1}
+							<path
+								d="M65 96 L95 96"
+								fill="none"
+								stroke="#090d18"
+								stroke-width="6"
+								stroke-linecap="round"
+							/>
+						{:else if selectedMouth === 2}
+							<path
+								d="M65 94 Q80 108 95 94"
+								fill="none"
+								stroke="#090d18"
+								stroke-width="6"
+								stroke-linecap="round"
+							/>
+						{/if}
+					</svg>
 				</div>
+
+				<button
+					class="carousel-arrow color-right"
+					type="button"
+					onclick={() => selectedColor = (selectedColor + 1) % colors.length}
+					aria-label="Next color"
+				>
+					→
+				</button>
+
+				<div class="character-label eyes-label">
+					Eyes
+				</div>
+
+				<button
+					class="carousel-arrow eyes-left"
+					type="button"
+					onclick={() => selectedEyes = (selectedEyes - 1 + eyes.length) % eyes.length}
+					aria-label="Previous eyes"
+				>
+					←
+				</button>
+
+				<button
+					class="carousel-arrow eyes-right"
+					type="button"
+					onclick={() => selectedEyes = (selectedEyes + 1) % eyes.length}
+					aria-label="Next eyes"
+				>
+					→
+				</button>
+
+				<div class="character-label mouth-label">
+					Mouth
+				</div>
+
+				<button
+					class="carousel-arrow mouth-left"
+					type="button"
+					onclick={() => selectedMouth = (selectedMouth - 1 + mouths.length) % mouths.length}
+					aria-label="Previous mouth"
+				>
+					←
+				</button>
+
+				<button
+					class="carousel-arrow mouth-right"
+					type="button"
+					onclick={() => selectedMouth = (selectedMouth + 1) % mouths.length}
+					aria-label="Next mouth"
+				>
+					→
+				</button>
+
 			</div>
 
 			<button class="primary" onclick={createRoom}>
