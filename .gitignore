@@ -28,3 +28,5 @@ vite.config.ts.timestamp-*
 .idea
 .vscode
 .ollamassist
+
+.dev-info
