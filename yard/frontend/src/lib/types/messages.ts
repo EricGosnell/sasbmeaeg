@@ -10,6 +10,7 @@ export type ClientMessage =
 			type: "join";
 			roomId: string;
 			playerId: string;
+			playerName: string;
 	  }
 	| {
 			type: "rule";

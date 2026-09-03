@@ -29,21 +29,25 @@
 	onMount(() => {
 		roomId = page.params.id;
 
-		playerId =
-			new URLSearchParams(
-				window.location.search
-			).get("player") ?? "";
+		playerId = sessionStorage.getItem("playerId");
+		playerName = sessionStorage.getItem("playerName");
 
 		connect(
-			roomId,
-			playerId,
 			async (msg) => {
-				console.log(
-					"WebSocket message:",
-					msg
-				);
+				console.log("WebSocket message:", msg);
 
 				switch (msg.type) {
+					case "named":
+						playerName = msg.playerName;
+						sessionStorage.setItem("playerName", playerName);
+
+						send({
+							type: "join",
+							roomId,
+							playerId,
+							playerName
+						});
+						break;
 					case "joined":
 						role = msg.role;
 						state = msg.state;
@@ -52,6 +56,7 @@
 						playerCards = msg.playerCards;
 
 						ruleSubmitted = msg.ruleSubmitted;
+
 						if (role === "yardmaster") {
 							ruleCode = msg.ruleCode;
 						}
@@ -66,24 +71,40 @@
 						break;
 					case "evaluate":
 						if (role === "yardmaster") {
-							const good =
-								await evaluateRule(
-									code,
-									[...state, msg.card]
-								);
+							const good = await evaluateRule(
+								code,
+								[...state, msg.card]
+							);
 
 							send({
 								type: "validate",
 								roomId,
-								card:msg.card,
+								card: msg.card,
 								good
 							});
 						}
 						break;
 					case "error":
-						if (msg.message == "Room does not exist") {
-							window.location.href = "../../";
+						if (msg.message === "Room does not exist") {
+							window.location.href = "/";
 						}
+						break;
+				}
+			},
+			() => {
+				if (!playerName?.trim()) {
+					send({
+						type: "name",
+						roomId,
+						playerId
+					});
+				} else {
+					send({
+						type: "join",
+						roomId,
+						playerId,
+						playerName
+					});
 				}
 			}
 		);
@@ -134,20 +155,6 @@
 			type: "yarddog",
 			roomId,
 			playerId
-		});
-	}
-
-	async function changeName(){
-		if (playerName.length > 32) {
-			alert("Name must be 32 characters or less");
-			return;
-		}
-
-		send({
-			type: "change",
-			roomId,
-			playerId,
-			playerName
 		});
 	}
 
@@ -220,19 +227,6 @@
 </button>
 
 {/if}
-
-{/if}
-
-{#if role !== "spectator"}
-
-<input
-	bind:value={playerName}
-	placeholder="Player Name"
-/>
-
-<button onclick={changeName}>
-	Change Name
-</button>
 
 {/if}
 

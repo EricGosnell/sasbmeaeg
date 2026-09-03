@@ -48,10 +48,11 @@ class BiMap<K extends string, V extends string> {
 type Room = {
     roomId: string;
 	clients: Map<string, any>;
-	playerIds: string[];
+	playerIds: Set<string>;
     playerNames: BiMap<string, string>;
     playerRoles: Map<string, string>;
     playerCards: Map<string, CardData[]>;
+    playerOrder: string[];
     deck: CardData[];
 	yardmaster: string;
 	currentTurn: number;
@@ -71,7 +72,7 @@ function createRoom(playerId:string) {
 	const room: Room = {
         roomId: id,
 		clients: new Map(),
-		playerIds: [playerId],
+		playerIds: new Set([playerId]),
         playerNames: (() => {
             const p = new BiMap<string, string>();
             p.set(playerId, "Yardmaster");
@@ -81,6 +82,7 @@ function createRoom(playerId:string) {
             [playerId, "yardmaster"]
         ]),
         playerCards: new Map(),
+        playerOrder: [],
         deck: [],
 		yardmaster: playerId,
 		currentTurn: 0,
@@ -128,29 +130,54 @@ wss.on("connection", (socket) => {
                     })
                 );
                 return;
+            case "check":
+                if (room.playerNames.getKey(msg.playerName) !== undefined) {
+                    socket.send(
+                        JSON.stringify({
+                            type: "error",
+                            message: "Player name already taken"
+                        })
+                    );
+                    return;
+                }
+
+                socket.send(
+                    JSON.stringify({
+                        type: "exists"
+                    })
+                );
+                return;
+            case "name":
+                socket.send(
+                    JSON.stringify({
+                        type: "named",
+                        playerName: Math.random().toString(36).substring(2, 8)
+                    })
+                );
+                return;
             case "join":
 		        // Player joins room
                 room.clients.set(msg.playerId, socket);
 
                 let role = "spectator";
-                if (room.playerIds.includes(msg.playerId)) {
+                if (room.playerIds.has(msg.playerId)) {
                     role = room.playerRoles.get(msg.playerId) ?? "spectator";
                 }
                 else if (!room.ruleSubmitted) {
                     role = "yarddog";
-                    room.playerNames.set(msg.playerId, "Yarddog " + room.playerIds.length);
-                    room.playerIds.push(msg.playerId);
+                    room.playerIds.add(msg.playerId);
                 }
 
+                room.playerNames.set(msg.playerId, msg.playerName);
                 room.playerRoles.set(msg.playerId, role);
 
                 socket.send(
                     JSON.stringify({
                         type: "joined",
                         role,
-                        playerNames: room.playerIds.map(id => room.playerNames.get(id)),
-                        playerRoles: room.playerIds.map(id => room.playerRoles.get(id)),
-                        playerCards: room.playerIds.map(id => room.playerCards.get(id)?.length),
+                        playerNames: [...room.playerIds].map(id => room.playerNames.get(id)),
+                        playerRoles: [...room.playerIds].map(id => room.playerRoles.get(id)),
+                        playerCards: [...room.playerIds].map(id => room.playerCards.get(id)?.length),
                         state: room.state,
                         ruleSubmitted: room.ruleSubmitted,
                         ruleCode: role === "yardmaster" ? room.ruleCode : null
@@ -170,6 +197,13 @@ wss.on("connection", (socket) => {
                 room.ruleCode = msg.code;
                 room.ruleSubmitted = true;
 
+                room.playerOrder = [room.yardmaster];
+                for (const playerId of room.playerIds) {
+                    if (room.playerRoles.get(playerId) === "yarddog") {
+                        room.playerOrder.push(playerId);
+                    }
+                }
+
                 const n = 7;
 
                 room.deck = generateDeck(true);
@@ -181,7 +215,7 @@ wss.on("connection", (socket) => {
                 }
 
                 // Deal cards
-                for (const playerId of room.playerIds) {
+                for (const playerId of room.playerOrder) {
                     room.playerCards.set(playerId, room.deck.splice(0, n));
                 }
 
@@ -211,7 +245,7 @@ wss.on("connection", (socket) => {
                     JSON.stringify({
                         type: "joined",
                         role: "yarddog",
-                        playerNames: room.playerIds.map(id => room.playerNames.get(id)),
+                        playerNames: [...room.playerIds].map(id => room.playerNames.get(id)),
                         state: room.state,
                         ruleSubmitted: room.ruleSubmitted,
                         ruleCode: null
@@ -222,7 +256,7 @@ wss.on("connection", (socket) => {
                     JSON.stringify({
                         type: "joined",
                         role: "yardmaster",
-                        playerNames: room.playerIds.map(id => room.playerNames.get(id)),
+                        playerNames: [...room.playerIds].map(id => room.playerNames.get(id)),
                         state: room.state,
                         ruleSubmitted: room.ruleSubmitted,
                         ruleCode: null
@@ -234,7 +268,7 @@ wss.on("connection", (socket) => {
                 return;
             case "spectate":
                 // Player switches to spectator
-                if (!room.playerIds.includes(msg.playerId)) {
+                if (!room.playerIds.has(msg.playerId)) {
                     console.log(
                         "Player does not exist",
                         msg.playerId
@@ -248,7 +282,7 @@ wss.on("connection", (socket) => {
                     JSON.stringify({
                         type: "joined",
                         role: "spectator",
-                        playerNames: room.playerIds.map(id => room.playerNames.get(id)),
+                        playerNames: [...room.playerIds].map(id => room.playerNames.get(id)),
                         state: room.state,
                         ruleSubmitted: room.ruleSubmitted,
                         ruleCode: null
@@ -260,7 +294,7 @@ wss.on("connection", (socket) => {
                 return;
             case "yarddog":
                 // Player switches to yarddog
-                if (!room.playerIds.includes(msg.playerId)) {
+                if (!room.playerIds.has(msg.playerId)) {
                     console.log("Player does not exist");
                     return;
                 }
@@ -271,7 +305,7 @@ wss.on("connection", (socket) => {
                     JSON.stringify({
                         type: "joined",
                         role: "yarddog",
-                        playerNames: room.playerIds.map(id => room.playerNames.get(id)),
+                        playerNames: [...room.playerIds].map(id => room.playerNames.get(id)),
                         state: room.state,
                         ruleSubmitted: room.ruleSubmitted,
                         ruleCode: null
@@ -281,24 +315,9 @@ wss.on("connection", (socket) => {
                 update(msg.roomId);
                 
                 return;
-            case "change":
-                // Player changes name
-                if (room.playerNames.getKey(msg.playerName) !== undefined) {
-                    console.log("Rejected duplicate name");
-                    return;
-                } else if (msg.playerName.length > 32) {
-                    console.log("Rejected long name");
-                    return;
-                } else {
-                    room.playerNames.set(msg.playerId, msg.playerName);
-                }
-
-                update(msg.roomId);
-
-                return;
             case "play":
 		        // Player plays a card
-                const currentPlayer = room.playerIds[room.currentTurn];
+                const currentPlayer = room.playerOrder[room.currentTurn];
                 
                 if (msg.playerId !== currentPlayer) {
                     console.log(
@@ -339,7 +358,7 @@ wss.on("connection", (socket) => {
 
                 // Player draws card if not good
                 if (!msg.good) {
-                    const currentPlayer = room.playerIds[room.currentTurn];
+                    const currentPlayer = room.playerOrder[room.currentTurn];
                     const hand = room.playerCards.get(currentPlayer);
                     const card = room.deck.pop();
 
@@ -351,7 +370,7 @@ wss.on("connection", (socket) => {
                     }
                 }
                 else {
-                    const currentPlayer = room.playerIds[room.currentTurn];
+                    const currentPlayer = room.playerOrder[room.currentTurn];
                     const hand = room.playerCards.get(currentPlayer);
                     
                     if (hand && !hand.length) {
@@ -363,7 +382,7 @@ wss.on("connection", (socket) => {
                     }
                 }
 
-                room.currentTurn = (room.currentTurn + 1) % room.playerIds.length;
+                room.currentTurn = (room.currentTurn + 1) % room.playerOrder.length;
 
                 update(msg.roomId);
 
@@ -393,14 +412,14 @@ function update(
 
         const message: any = {
             type: "updated",
-            playerNames: room.playerIds.map(id => room.playerNames.get(id)),
-            playerRoles: room.playerIds.map(id => room.playerRoles.get(id)),
-            playerCards: room.playerIds.map(id => room.playerCards.get(id)?.length),
+            playerNames: [...room.playerIds].map(id => room.playerNames.get(id)),
+            playerRoles: [...room.playerIds].map(id => room.playerRoles.get(id)),
+            playerCards: [...room.playerIds].map(id => room.playerCards.get(id)?.length),
             state: room.state,
             ruleSubmitted: room.ruleSubmitted
         };
 
-        if (room.playerIds.includes(playerId)) {
+        if (room.playerIds.has(playerId)) {
             message.cards = room.playerCards.get(playerId);
         }
 
