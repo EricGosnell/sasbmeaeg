@@ -3,14 +3,19 @@
 	import { onMount } from "svelte";
 	import { connect, send } from "$lib/client/gameClient";
 	import { evaluateRule } from "$lib/ruleClient";
-	import { generateDeck, cardImage } from "../../../../../shared/src/utils/cards.ts";
 	import type { CardData } from "../../../../../shared/src/types/card";
+
+	import GameHeader from "./components/GameHeader.svelte";
+	import PlayersRow from "./components/PlayersRow.svelte";
+	import GameTable from "./components/GameTable.svelte";
+	import PlayerArea from "./components/PlayerArea.svelte";
+	import RuleBox from "./components/RuleBox.svelte";
 
 	let worker: Worker | null = null;
 
 	let roomId = $state("");
-  	let playerId = $state("");
-  	let role = $state("");
+	let playerId = $state("");
+	let role = $state("");
 	let playerName = $state("");
 	let playerNames = $state<string[]>([]);
 	let playerCharacters = $state<any[]>([]);
@@ -18,7 +23,7 @@
 	let playerCards = $state<number[]>([]);
 
 	let cards = $state<CardData[]>([]);
-    let state = $state<CardData[]>([]);
+	let state = $state<CardData[]>([]);
 
 	let ruleSubmitted = $state(false);
 	let ruleCode = $state("");
@@ -26,36 +31,6 @@
 	let code = $state(`function rules(state) {
 		return suit(last(state)) == "Spades";
 	}`);
-
-	function characterColor(character) {
-		switch (character?.color) {
-			case "Blue":
-				return {
-					head: "#168cff",
-					body: "#0874d9"
-				};
-			case "Green":
-				return {
-					head: "#06d6a0",
-					body: "#05b889"
-				};
-			case "Red":
-				return {
-					head: "#ef476f",
-					body: "#d9365e"
-				};
-			case "Yellow":
-				return {
-					head: "#ffd166",
-					body: "#e6b94f"
-				};
-			default:
-				return {
-					head: "#b000ff",
-					body: "#a000e8"
-				};
-		}
-	}
 
 	onMount(() => {
 		roomId = page.params.id;
@@ -91,6 +66,7 @@
 							character: playerCharacter
 						});
 						break;
+
 					case "joined":
 						role = msg.role;
 						state = msg.state;
@@ -105,6 +81,7 @@
 							ruleCode = msg.ruleCode;
 						}
 						break;
+
 					case "updated":
 						cards = msg.cards;
 						state = msg.state;
@@ -114,6 +91,7 @@
 						playerCards = msg.playerCards;
 						ruleSubmitted = msg.ruleSubmitted;
 						break;
+
 					case "evaluate":
 						if (role === "yardmaster") {
 							const good = await evaluateRule(
@@ -129,6 +107,7 @@
 							});
 						}
 						break;
+
 					case "error":
 						if (msg.message === "Room does not exist") {
 							window.location.href = "/";
@@ -168,18 +147,19 @@
 		});
 
 		worker?.terminate();
+
 		worker = new Worker(
-				new URL(
-						"../../../lib/ruleWorker.ts",
-						import.meta.url
-				),
-				{
-					type:"module"
-				}
+			new URL(
+				"../../../lib/ruleWorker.ts",
+				import.meta.url
+			),
+			{
+				type: "module"
+			}
 		);
 	}
 
-	async function yieldRule(){
+	async function yieldRule() {
 		send({
 			type: "yield",
 			roomId,
@@ -188,7 +168,7 @@
 		});
 	}
 
-	async function beSpectator(){
+	async function beSpectator() {
 		send({
 			type: "spectate",
 			roomId,
@@ -196,7 +176,7 @@
 		});
 	}
 
-	async function beYarddog(){
+	async function beYarddog() {
 		send({
 			type: "yarddog",
 			roomId,
@@ -204,7 +184,7 @@
 		});
 	}
 
-	async function play(card){
+	async function play(card: CardData) {
 		send({
 			type: "play",
 			roomId,
@@ -212,201 +192,115 @@
 			card
 		});
 	}
-
 </script>
 
+<div class="game-page">
+	<GameHeader {roomId} />
 
-<h1>
-	Room {roomId}
-</h1>
+	<main class="game-layout">
+		<div class="players-area">
+			<PlayersRow
+				{playerNames}
+				{playerCharacters}
+				{playerRoles}
+				{playerCards}
+			/>
+		</div>
 
-<p>
-	Role: {role}
-</p>
+		<div class="table-area">
+			<GameTable {state} />
+		</div>
 
-{#if role === "yardmaster"}
+		<div class="bottom-area">
+			<div class="player-area">
+				<PlayerArea
+					{playerName}
+					{playerCharacters}
+					{playerNames}
+					{cards}
+					{role}
+					{ruleSubmitted}
+					{play}
+				/>
+			</div>
 
-	<h2>Your Secret Rule</h2>
-
-<textarea
-	bind:value={code}
-	rows="10"
-	cols="60"
-	disabled={ruleSubmitted}
-></textarea>
-
-	<br>
-
-{/if}
-
-{#if !ruleSubmitted}
-
-{#if role === "yardmaster"}
-
-<button onclick={submitRule}>
-	{ruleSubmitted ? "Rule Submitted" : "Submit Rule"}
-</button>
-
-<input
-	bind:value={playerName}
-	placeholder="New Yardmaster"
-/>
-
-<button onclick={yieldRule}>
-	Yield Rule
-</button>
-
-{/if}
-
-{#if role === "yarddog"}
-
-<button onclick={beSpectator}>
-	Be Spectator
-</button>
-
-{/if}
-
-{#if role === "spectator"}
-
-<button onclick={beYarddog}>
-	Be Yarddog
-</button>
-
-{/if}
-
-{/if}
-
-{#each playerNames as name, i}
-		<div class="player-row">
-			{#if playerCharacters[i]}
-				<svg
-					viewBox="0 0 160 180"
-					class="player-character"
-					role="img"
-					aria-label="{name}'s character"
-				>
-					<path
-						d="M45 175
-							C48 145 62 128 80 128
-							C98 128 112 145 115 175
-							Z"
-						fill={characterColor(playerCharacters[i]).body}
-						stroke="#090d18"
-						stroke-width="7"
-						stroke-linejoin="round"
-					/>
-
-					<circle
-						cx="80"
-						cy="75"
-						r="52"
-						fill={characterColor(playerCharacters[i]).head}
-						stroke="#090d18"
-						stroke-width="7"
-					/>
-
-					{#if playerCharacters[i].eyes === "Dot"}
-						<circle cx="60" cy="68" r="7" fill="#090d18" />
-						<circle cx="100" cy="68" r="7" fill="#090d18" />
-					{:else if playerCharacters[i].eyes === "Sleepy"}
-						<rect x="52" y="62" width="16" height="8" rx="4" fill="#090d18" />
-						<rect x="92" y="62" width="16" height="8" rx="4" fill="#090d18" />
-					{:else if playerCharacters[i].eyes === "Big"}
-						<circle cx="60" cy="68" r="10" fill="#090d18" />
-						<circle cx="100" cy="68" r="10" fill="#090d18" />
-						<circle cx="63" cy="65" r="3" fill="white" />
-						<circle cx="103" cy="65" r="3" fill="white" />
-					{/if}
-
-					{#if playerCharacters[i].mouth === "Smile"}
-						<path
-							d="M65 94 Q80 103 95 94"
-							fill="none"
-							stroke="#090d18"
-							stroke-width="6"
-							stroke-linecap="round"
-						/>
-					{:else if playerCharacters[i].mouth === "Flat"}
-						<path
-							d="M65 96 L95 96"
-							fill="none"
-							stroke="#090d18"
-							stroke-width="6"
-							stroke-linecap="round"
-						/>
-					{:else if playerCharacters[i].mouth === "Happy"}
-						<path
-							d="M65 94 Q80 108 95 94"
-							fill="none"
-							stroke="#090d18"
-							stroke-width="6"
-							stroke-linecap="round"
-						/>
-					{/if}
-				</svg>
-			{/if}
-
-			<div>
-				{name}: {playerRoles[i]}, {playerCards[i]}
+			<div class="rule-area">
+				<RuleBox
+					{role}
+					{ruleSubmitted}
+					bind:code
+					{submitRule}
+					{yieldRule}
+					{beSpectator}
+					{beYarddog}
+				/>
 			</div>
 		</div>
-{/each}
-
-<br>
-
-<div class="playing-row">
-	{#each cards as card}
-		<button
-				disabled={!ruleSubmitted}
-				onclick={() => play(card)}
-		>
-			<img
-				class="played-card"
-				src={cardImage(card.rank, card.suit)}
-				alt="{card.rank} of {card.suit}"
-			/>
-		</button>
-	{/each}
-</div>
-
-<div class="played-row">
-	{#each state as card}
-		<img
-			class="played-card"
-			class:bad-offset={!card.good}
-			src={cardImage(card.rank, card.suit)}
-			alt="{card.rank} of {card.suit}"
-		/>
-	{/each}
+	</main>
 </div>
 
 <style>
-	.player-row {
-		display: flex;
-		align-items: center;
-		gap: 10px;
-		margin-bottom: 8px;
-	}
-
-	.player-character {
-		width: 48px;
-		height: 54px;
-		flex-shrink: 0;
-	}
-
-	.played-row {
-		display: flex;
-		flex-direction: row;
-		align-items: flex-end;
-		gap: 2px;
+	.game-page {
+		min-height: 100vh;
+		box-sizing: border-box;
 		padding: 20px;
+		background: #0f2419;
+		color: #f5f1e6;
+		font-family: system-ui, sans-serif;
 	}
 
-	.played-card {
-		width: 80px;
+	.game-layout {
+		display: grid;
+		grid-template-columns: 1fr;
+		grid-template-rows: auto minmax(280px, 1fr) auto;
+		gap: 20px;
+		max-width: 1400px;
+		min-height: calc(100vh - 90px);
+		margin: 0 auto;
 	}
 
-	.played-card.bad-offset {
-		transform: translateY(-18px);
+	.players-area {
+		min-width: 0;
+	}
+
+	.table-area {
+		min-width: 0;
+		min-height: 0;
+	}
+
+	.bottom-area {
+		display: grid;
+		grid-template-columns: minmax(0, 1fr) minmax(300px, 380px);
+		gap: 20px;
+		align-items: stretch;
+		min-width: 0;
+	}
+
+	.player-area,
+	.rule-area {
+		min-width: 0;
+	}
+
+	@media (max-width: 900px) {
+		.bottom-area {
+			grid-template-columns: minmax(0, 1fr) minmax(240px, 300px);
+			gap: 12px;
+		}
+	}
+
+	@media (max-width: 700px) {
+		.game-page {
+			padding: 10px;
+		}
+
+		.game-layout {
+			gap: 12px;
+			min-height: calc(100vh - 60px);
+		}
+
+		.bottom-area {
+			grid-template-columns: 1fr;
+			gap: 12px;
+		}
 	}
 </style>
