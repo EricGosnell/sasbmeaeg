@@ -1,164 +1,151 @@
 <script lang="ts">
+	import CharacterFeatures from "$lib/components/CharacterFeatures.svelte";
+
 	let {
-		role,
-		ruleSubmitted,
-		code = $bindable(),
-		submitRule,
-		yieldRule,
-		beSpectator,
-		beYarddog
+		character,
+		size = "normal",
+		ariaLabel = "Character"
+	}: {
+		character: any;
+		size?: "small" | "normal" | "large";
+		ariaLabel?: string;
 	} = $props();
+
+	const colors: Record<string, { head: string; body: string }> = {
+		Purple: {
+			head: "#b000ff",
+			body: "#a000e8"
+		},
+		Blue: {
+			head: "#168cff",
+			body: "#0874d9"
+		},
+		Green: {
+			head: "#06d6a0",
+			body: "#05b889"
+		},
+		Red: {
+			head: "#ef476f",
+			body: "#d9365e"
+		},
+		Yellow: {
+			head: "#ffd166",
+			body: "#e6b94f"
+		},
+		Orange: {
+			head: "#ff8c42",
+			body: "#e66f26"
+		},
+		Pink: {
+			head: "#ff5ca8",
+			body: "#e6428b"
+		},
+		Cyan: {
+			head: "#22d3ee",
+			body: "#0ea5c9"
+		},
+		Teal: {
+			head: "#14b8a6",
+			body: "#0f9488"
+		},
+		Lime: {
+			head: "#a3e635",
+			body: "#7fbd24"
+		},
+		Gold: {
+			head: "#fbbf24",
+			body: "#d99a12"
+		},
+		Coral: {
+			head: "#ff6b6b",
+			body: "#e94f4f"
+		},
+		Lavender: {
+			head: "#c084fc",
+			body: "#a855f7"
+		},
+		Mint: {
+			head: "#6ee7b7",
+			body: "#34c995"
+		},
+		Sky: {
+			head: "#38bdf8",
+			body: "#199bd1"
+		},
+		White: {
+			head: "#f5f1e6",
+			body: "#d8d2c0"
+		},
+		Black: {
+			head: "#343a40",
+			body: "#212529"
+		}
+	};
+
+	const defaultColor = colors.Purple;
+
+	function characterColor(character: any) {
+		return colors[character?.color] ?? defaultColor;
+	}
+
+	let color = $derived(characterColor(character));
 </script>
 
-<section class="rule-box">
-	{#if role === "yardmaster"}
-		<div class="rule-header">
-			<h2>Your Secret Rule</h2>
-		</div>
+{#if character}
+	<svg
+		viewBox="0 0 160 180"
+		class:small={size === "small"}
+		class:normal={size === "normal"}
+		class:large={size === "large"}
+		role="img"
+		aria-label={ariaLabel}
+	>
+		<path
+			d="M40 175
+				C43 145 60 128 80 128
+				C100 128 117 145 120 175
+				Z"
+			fill={color.body}
+			stroke="#090d18"
+			stroke-width="7"
+			stroke-linejoin="round"
+		/>
 
-		<textarea
-			bind:value={code}
-			rows="10"
-			disabled={ruleSubmitted}
-		></textarea>
+		<circle
+			cx="80"
+			cy="75"
+			r="52"
+			fill={color.head}
+			stroke="#090d18"
+			stroke-width="7"
+		/>
 
-		<div class="rule-actions">
-			{#if !ruleSubmitted}
-				<button
-					class="submit-button"
-					onclick={submitRule}
-				>
-					Submit Rule
-				</button>
-
-				<input
-					bind:value={code}
-					placeholder="New Yardmaster"
-				/>
-
-				<button
-					class="yield-button"
-					onclick={yieldRule}
-				>
-					Yield Rule
-				</button>
-			{/if}
-		</div>
-	{:else if role === "yarddog"}
-		{#if !ruleSubmitted}
-			<button
-				class="secondary-button"
-				onclick={beSpectator}
-			>
-				Be Spectator
-			</button>
-		{/if}
-	{:else if role === "spectator"}
-		{#if !ruleSubmitted}
-			<button
-				class="secondary-button"
-				onclick={beYarddog}
-			>
-				Be Yarddog
-			</button>
-		{/if}
-	{/if}
-</section>
+		<CharacterFeatures
+			eyes={character.eyes}
+			mouth={character.mouth}
+		/>
+	</svg>
+{/if}
 
 <style>
-	.rule-box {
-		width: 100%;
-		box-sizing: border-box;
-		padding: 18px;
-		background: rgba(245, 241, 230, 0.06);
-		border: 2px solid rgba(255, 255, 255, 0.12);
-		border-radius: 16px;
-	}
-
-	.rule-header h2 {
-		margin: 0 0 12px;
-		color: #ffd166;
-		font-size: 1.2rem;
-	}
-
-	textarea {
+	svg {
 		display: block;
-		width: 100%;
-		min-height: 180px;
-		box-sizing: border-box;
-		padding: 12px;
-		resize: vertical;
-		border: 2px solid rgba(255, 255, 255, 0.15);
-		border-radius: 10px;
-		background: #101a14;
-		color: #f5f1e6;
-		font-family: monospace;
-		font-size: 0.95rem;
-		line-height: 1.5;
+		flex-shrink: 0;
+		filter: drop-shadow(0 6px 6px rgba(0, 0, 0, 0.25));
 	}
 
-	textarea:disabled {
-		opacity: 0.7;
+	svg.small {
+		width: 48px;
+		height: 54px;
 	}
 
-	.rule-actions {
-		display: flex;
-		align-items: center;
-		gap: 10px;
-		margin-top: 12px;
-		flex-wrap: wrap;
+	svg.normal {
+		width: 90px;
+		height: 110px;
 	}
 
-	button {
-		padding: 10px 18px;
-		border: none;
-		border-radius: 10px;
-		font-size: 0.95rem;
-		font-weight: 700;
-		cursor: pointer;
-	}
-
-	.submit-button {
-		background: #ffd166;
-		color: #1b3a2f;
-	}
-
-	.yield-button {
-		background: #ef476f;
-		color: white;
-	}
-
-	.secondary-button {
-		background: #06d6a0;
-		color: #0f2419;
-	}
-
-	input {
-		width: 160px;
-		padding: 10px 12px;
-		box-sizing: border-box;
-		border: 2px solid #d8d2c0;
-		border-radius: 10px;
-		background: #f5f1e6;
-		color: #0f2419;
-	}
-
-	@media (max-width: 700px) {
-		.rule-box {
-			padding: 12px;
-		}
-
-		textarea {
-			min-height: 140px;
-		}
-
-		.rule-actions {
-			flex-direction: column;
-			align-items: stretch;
-		}
-
-		input {
-			width: 100%;
-		}
+	svg.large {
+		width: 120px;
+		height: 140px;
 	}
 </style>

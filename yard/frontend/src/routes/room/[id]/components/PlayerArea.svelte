@@ -1,19 +1,18 @@
 <script lang="ts">
 	import { cardImage } from "../../../../../../shared/src/utils/cards.ts";
 	import type { CardData } from "../../../../../../shared/src/types/card";
+	import Character from "./Character.svelte";
 
 	let {
 		playerName,
-		playerCharacters,
-		playerNames,
+		playerCharacter,
 		cards,
 		role,
 		ruleSubmitted,
 		play
 	}: {
 		playerName: string;
-		playerCharacters: any[];
-		playerNames: string[];
+		playerCharacter: any;
 		cards: CardData[];
 		role: string;
 		ruleSubmitted: boolean;
@@ -23,7 +22,13 @@
 
 <div class="player-area">
 	<div class="character-section">
-		<div class="character-placeholder">
+		<Character
+			character={playerCharacter}
+			size="normal"
+			ariaLabel="Your character"
+		/>
+
+		<div class="player-name">
 			{playerName}
 		</div>
 	</div>
@@ -62,16 +67,19 @@
 	.character-section {
 		flex-shrink: 0;
 		width: 100px;
-		height: 140px;
+		height: 160px;
 		display: flex;
-		align-items: flex-end;
-		justify-content: center;
+		flex-direction: column;
+		align-items: center;
+		justify-content: flex-end;
 	}
 
-	.character-placeholder {
-		color: #d8d2c0;
+	.player-name {
+		color: #f5f1e6;
 		font-weight: 700;
 		text-align: center;
+		margin-top: 4px;
+		white-space: nowrap;
 	}
 
 	.hand-section {
@@ -93,6 +101,8 @@
 		border: none;
 		border-radius: 8px;
 		box-shadow: none;
+		cursor: pointer;
+		transition: transform 0.15s ease;
 	}
 
 	.hand-card:hover {

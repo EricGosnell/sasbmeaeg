@@ -1,40 +1,70 @@
 <script lang="ts">
-	import PlayerBox from "./PlayerBox.svelte";
+	import Character from "./Character.svelte";
 
 	let {
+		playerName,
 		playerNames,
 		playerCharacters,
 		playerRoles,
 		playerCards
+	}: {
+		playerName: string;
+		playerNames: string[];
+		playerCharacters: any[];
+		playerRoles: string[];
+		playerCards: number[];
 	} = $props();
 </script>
 
-<section class="players-row">
+<div class="players-row">
 	{#each playerNames as name, i}
-		<PlayerBox
-			name={name}
-			character={playerCharacters[i]}
-			role={playerRoles[i]}
-			cardCount={playerCards[i]}
-		/>
+		{#if name !== playerName}
+			<div class="player">
+				{#if playerCharacters[i]}
+					<Character
+						character={playerCharacters[i]}
+						size={48}
+					/>
+				{/if}
+
+				<div class="player-info">
+					<div class="player-name">{name}</div>
+
+					<div class="player-details">
+						{playerRoles[i]}, {playerCards[i] ?? 0}
+					</div>
+				</div>
+			</div>
+		{/if}
 	{/each}
-</section>
+</div>
 
 <style>
 	.players-row {
 		display: flex;
 		flex-direction: row;
-		align-items: stretch;
-		gap: 14px;
+		gap: 12px;
 		width: 100%;
 		overflow-x: auto;
-		padding: 4px;
-		box-sizing: border-box;
 	}
 
-	@media (max-width: 700px) {
-		.players-row {
-			gap: 8px;
-		}
+	.player {
+		display: flex;
+		align-items: center;
+		gap: 8px;
+		flex: 0 0 auto;
+		padding: 8px 12px;
+		background: rgba(245, 241, 230, 0.06);
+		border: 2px solid rgba(255, 255, 255, 0.12);
+		border-radius: 12px;
+	}
+
+	.player-name {
+		font-weight: 700;
+	}
+
+	.player-details {
+		color: #d8d2c0;
+		font-size: 0.8rem;
 	}
 </style>

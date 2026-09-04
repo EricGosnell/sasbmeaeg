@@ -11,12 +11,15 @@
 	import PlayerArea from "./components/PlayerArea.svelte";
 	import RuleBox from "./components/RuleBox.svelte";
 
+	import "./game.css";
+
 	let worker: Worker | null = null;
 
 	let roomId = $state("");
 	let playerId = $state("");
 	let role = $state("");
 	let playerName = $state("");
+	let playerCharacter = $state<any>(null);
 	let playerNames = $state<string[]>([]);
 	let playerCharacters = $state<any[]>([]);
 	let playerRoles = $state<string[]>([]);
@@ -35,10 +38,9 @@
 	onMount(() => {
 		roomId = page.params.id;
 
-		playerId = sessionStorage.getItem("playerId");
-		playerName = sessionStorage.getItem("playerName");
+		playerId = sessionStorage.getItem("playerId") ?? "";
+		playerName = sessionStorage.getItem("playerName") ?? "";
 
-		let playerCharacter = null;
 		const storedCharacter = sessionStorage.getItem("playerCharacter");
 
 		if (storedCharacter) {
@@ -69,11 +71,14 @@
 
 					case "joined":
 						role = msg.role;
-						state = msg.state;
-						playerNames = msg.playerNames;
+						state = msg.state ?? [];
+						playerNames = msg.playerNames ?? [];
 						playerCharacters = msg.playerCharacters ?? [];
-						playerRoles = msg.playerRoles;
-						playerCards = msg.playerCards;
+						playerRoles = msg.playerRoles ?? [];
+						playerCards = msg.playerCards ?? [];
+
+						console.log("JOINED NAMES:", playerNames);
+						console.log("JOINED CHARACTERS:", playerCharacters);
 
 						ruleSubmitted = msg.ruleSubmitted;
 
@@ -83,12 +88,16 @@
 						break;
 
 					case "updated":
-						cards = msg.cards;
-						state = msg.state;
-						playerNames = msg.playerNames;
+						cards = msg.cards ?? [];
+						state = msg.state ?? [];
+						playerNames = msg.playerNames ?? [];
 						playerCharacters = msg.playerCharacters ?? [];
-						playerRoles = msg.playerRoles;
-						playerCards = msg.playerCards;
+						playerRoles = msg.playerRoles ?? [];
+						playerCards = msg.playerCards ?? [];
+
+						console.log("UPDATED NAMES:", playerNames);
+						console.log("UPDATED CHARACTERS:", playerCharacters);
+
 						ruleSubmitted = msg.ruleSubmitted;
 						break;
 
@@ -200,6 +209,7 @@
 	<main class="game-layout">
 		<div class="players-area">
 			<PlayersRow
+				{playerName}
 				{playerNames}
 				{playerCharacters}
 				{playerRoles}
@@ -215,8 +225,7 @@
 			<div class="player-area">
 				<PlayerArea
 					{playerName}
-					{playerCharacters}
-					{playerNames}
+					{playerCharacter}
 					{cards}
 					{role}
 					{ruleSubmitted}
@@ -238,69 +247,3 @@
 		</div>
 	</main>
 </div>
-
-<style>
-	.game-page {
-		min-height: 100vh;
-		box-sizing: border-box;
-		padding: 20px;
-		background: #0f2419;
-		color: #f5f1e6;
-		font-family: system-ui, sans-serif;
-	}
-
-	.game-layout {
-		display: grid;
-		grid-template-columns: 1fr;
-		grid-template-rows: auto minmax(280px, 1fr) auto;
-		gap: 20px;
-		max-width: 1400px;
-		min-height: calc(100vh - 90px);
-		margin: 0 auto;
-	}
-
-	.players-area {
-		min-width: 0;
-	}
-
-	.table-area {
-		min-width: 0;
-		min-height: 0;
-	}
-
-	.bottom-area {
-		display: grid;
-		grid-template-columns: minmax(0, 1fr) minmax(300px, 380px);
-		gap: 20px;
-		align-items: stretch;
-		min-width: 0;
-	}
-
-	.player-area,
-	.rule-area {
-		min-width: 0;
-	}
-
-	@media (max-width: 900px) {
-		.bottom-area {
-			grid-template-columns: minmax(0, 1fr) minmax(240px, 300px);
-			gap: 12px;
-		}
-	}
-
-	@media (max-width: 700px) {
-		.game-page {
-			padding: 10px;
-		}
-
-		.game-layout {
-			gap: 12px;
-			min-height: calc(100vh - 60px);
-		}
-
-		.bottom-area {
-			grid-template-columns: 1fr;
-			gap: 12px;
-		}
-	}
-</style>
