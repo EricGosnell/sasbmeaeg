@@ -3,67 +3,47 @@
 	import { onMount } from "svelte";
 	import { connect, send } from "$lib/client/gameClient";
 	import { evaluateRule } from "$lib/ruleClient";
-	import { generateDeck, cardImage } from "../../../../../shared/src/utils/cards.ts";
 	import type { CardData } from "../../../../../shared/src/types/card";
+
+	import GameHeader from "./components/GameHeader.svelte";
+	import PlayersRow from "./components/PlayersRow.svelte";
+	import GameTable from "./components/GameTable.svelte";
+	import PlayerArea from "./components/PlayerArea.svelte";
+	import RuleBox from "./components/RuleBox.svelte";
+
+	import "./game.css";
 
 	let worker: Worker | null = null;
 
 	let roomId = $state("");
-  	let playerId = $state("");
-  	let role = $state("");
+	let playerId = $state("");
+	let role = $state("");
 	let playerName = $state("");
+	let playerCharacter = $state<any>(null);
+	let playerIds = $state<string[]>([]);
 	let playerNames = $state<string[]>([]);
 	let playerCharacters = $state<any[]>([]);
 	let playerRoles = $state<string[]>([]);
 	let playerCards = $state<number[]>([]);
+	let currentTurnPlayerId = $state("");
+	let notes = $state("");
 
 	let cards = $state<CardData[]>([]);
-    let state = $state<CardData[]>([]);
+	let state = $state<CardData[]>([]);
 
-	let ruleSubmitted = $state(false);
+	let ruleSubmitted = false;
 	let ruleCode = $state("");
 
 	let code = $state(`function rules(state) {
 		return suit(last(state)) == "Spades";
 	}`);
 
-	function characterColor(character) {
-		switch (character?.color) {
-			case "Blue":
-				return {
-					head: "#168cff",
-					body: "#0874d9"
-				};
-			case "Green":
-				return {
-					head: "#06d6a0",
-					body: "#05b889"
-				};
-			case "Red":
-				return {
-					head: "#ef476f",
-					body: "#d9365e"
-				};
-			case "Yellow":
-				return {
-					head: "#ffd166",
-					body: "#e6b94f"
-				};
-			default:
-				return {
-					head: "#b000ff",
-					body: "#a000e8"
-				};
-		}
-	}
-
 	onMount(() => {
 		roomId = page.params.id;
 
-		playerId = sessionStorage.getItem("playerId");
-		playerName = sessionStorage.getItem("playerName");
+		playerId = sessionStorage.getItem("playerId") ?? "";
+		playerName = sessionStorage.getItem("playerName") ?? "";
 
-		let playerCharacter = null;
 		const storedCharacter = sessionStorage.getItem("playerCharacter");
 
 		if (storedCharacter) {
@@ -91,13 +71,16 @@
 							character: playerCharacter
 						});
 						break;
+
 					case "joined":
 						role = msg.role;
 						state = msg.state;
-						playerNames = msg.playerNames;
+						playerIds = msg.playerIds ?? [];
+						playerNames = msg.playerNames ?? [];
 						playerCharacters = msg.playerCharacters ?? [];
-						playerRoles = msg.playerRoles;
-						playerCards = msg.playerCards;
+						playerRoles = msg.playerRoles ?? [];
+						playerCards = msg.playerCards ?? [];
+						currentTurnPlayerId = msg.currentTurnPlayerId ?? "";
 
 						ruleSubmitted = msg.ruleSubmitted;
 
@@ -105,15 +88,19 @@
 							ruleCode = msg.ruleCode;
 						}
 						break;
+
 					case "updated":
-						cards = msg.cards;
-						state = msg.state;
-						playerNames = msg.playerNames;
+						cards = msg.cards ?? [];
+						state = msg.state ?? [];
+						playerIds = msg.playerIds ?? [];
+						playerNames = msg.playerNames ?? [];
 						playerCharacters = msg.playerCharacters ?? [];
-						playerRoles = msg.playerRoles;
-						playerCards = msg.playerCards;
+						playerRoles = msg.playerRoles ?? [];
+						playerCards = msg.playerCards ?? [];
+						currentTurnPlayerId = msg.currentTurnPlayerId ?? "";
 						ruleSubmitted = msg.ruleSubmitted;
 						break;
+
 					case "evaluate":
 						if (role === "yardmaster") {
 							const good = await evaluateRule(
@@ -129,6 +116,7 @@
 							});
 						}
 						break;
+
 					case "error":
 						if (msg.message === "Room does not exist") {
 							window.location.href = "/";
@@ -168,27 +156,28 @@
 		});
 
 		worker?.terminate();
+
 		worker = new Worker(
-				new URL(
-						"../../../lib/ruleWorker.ts",
-						import.meta.url
-				),
-				{
-					type:"module"
-				}
+			new URL(
+				"../../../lib/ruleWorker.ts",
+				import.meta.url
+			),
+			{
+				type: "module"
+			}
 		);
 	}
 
-	async function yieldRule(){
+	async function yieldRule(newYardmasterId: string) {
 		send({
 			type: "yield",
 			roomId,
 			playerId,
-			playerName
+			newYardmasterId
 		});
 	}
 
-	async function beSpectator(){
+	async function beSpectator() {
 		send({
 			type: "spectate",
 			roomId,
@@ -196,7 +185,7 @@
 		});
 	}
 
-	async function beYarddog(){
+	async function beYarddog() {
 		send({
 			type: "yarddog",
 			roomId,
@@ -204,7 +193,7 @@
 		});
 	}
 
-	async function play(card){
+	async function play(card: CardData) {
 		send({
 			type: "play",
 			roomId,
@@ -212,201 +201,137 @@
 			card
 		});
 	}
-
 </script>
 
+<div class="game-page">
+	<div class="floaters" aria-hidden="true">
+		<span class="suit s1">♠</span>
+		<span class="suit s2">♥</span>
+		<span class="suit s3">♦</span>
+		<span class="suit s4">♣</span>
+		<span class="suit s5">♠</span>
+		<span class="suit s6">♥</span>
+		<span class="suit s7">♦</span>
+		<span class="suit s8">♣</span>
+	</div>
 
-<h1>
-	Room {roomId}
-</h1>
+	<GameHeader {roomId} {role} />
 
-<p>
-	Role: {role}
-</p>
+	<main class="game-layout">
+		<div class="players-area">
+			<PlayersRow
+				{playerName}
+				{playerIds}
+				{playerNames}
+				{playerCharacters}
+				{playerRoles}
+				{playerCards}
+				{currentTurnPlayerId}
+			/>
+		</div>
 
-{#if role === "yardmaster"}
+		<div class="table-area">
+			<GameTable {state} />
+		</div>
 
-	<h2>Your Secret Rule</h2>
+		<div class="bottom-area">
+			<div class="player-area">
+				<PlayerArea
+					{playerName}
+					{playerCharacter}
+					{cards}
+					{role}
+					{ruleSubmitted}
+					{play}
+					{playerId}
+					{currentTurnPlayerId}
+				/>
+			</div>
 
-<textarea
-	bind:value={code}
-	rows="10"
-	cols="60"
-	disabled={ruleSubmitted}
-></textarea>
-
-	<br>
-
-{/if}
-
-{#if !ruleSubmitted}
-
-{#if role === "yardmaster"}
-
-<button onclick={submitRule}>
-	{ruleSubmitted ? "Rule Submitted" : "Submit Rule"}
-</button>
-
-<input
-	bind:value={playerName}
-	placeholder="New Yardmaster"
-/>
-
-<button onclick={yieldRule}>
-	Yield Rule
-</button>
-
-{/if}
-
-{#if role === "yarddog"}
-
-<button onclick={beSpectator}>
-	Be Spectator
-</button>
-
-{/if}
-
-{#if role === "spectator"}
-
-<button onclick={beYarddog}>
-	Be Yarddog
-</button>
-
-{/if}
-
-{/if}
-
-{#each playerNames as name, i}
-		<div class="player-row">
-			{#if playerCharacters[i]}
-				<svg
-					viewBox="0 0 160 180"
-					class="player-character"
-					role="img"
-					aria-label="{name}'s character"
-				>
-					<path
-						d="M45 175
-							C48 145 62 128 80 128
-							C98 128 112 145 115 175
-							Z"
-						fill={characterColor(playerCharacters[i]).body}
-						stroke="#090d18"
-						stroke-width="7"
-						stroke-linejoin="round"
+			<div class="rule-area">
+				{#if role === "yardmaster"}
+					<RuleBox
+						{role}
+						{ruleSubmitted}
+						bind:code
+						{submitRule}
+						{yieldRule}
+						{beSpectator}
+						{beYarddog}
+						{playerId}
+						{playerIds}
+						{playerNames}
+						{playerRoles}
 					/>
-
-					<circle
-						cx="80"
-						cy="75"
-						r="52"
-						fill={characterColor(playerCharacters[i]).head}
-						stroke="#090d18"
-						stroke-width="7"
-					/>
-
-					{#if playerCharacters[i].eyes === "Dot"}
-						<circle cx="60" cy="68" r="7" fill="#090d18" />
-						<circle cx="100" cy="68" r="7" fill="#090d18" />
-					{:else if playerCharacters[i].eyes === "Sleepy"}
-						<rect x="52" y="62" width="16" height="8" rx="4" fill="#090d18" />
-						<rect x="92" y="62" width="16" height="8" rx="4" fill="#090d18" />
-					{:else if playerCharacters[i].eyes === "Big"}
-						<circle cx="60" cy="68" r="10" fill="#090d18" />
-						<circle cx="100" cy="68" r="10" fill="#090d18" />
-						<circle cx="63" cy="65" r="3" fill="white" />
-						<circle cx="103" cy="65" r="3" fill="white" />
-					{/if}
-
-					{#if playerCharacters[i].mouth === "Smile"}
-						<path
-							d="M65 94 Q80 103 95 94"
-							fill="none"
-							stroke="#090d18"
-							stroke-width="6"
-							stroke-linecap="round"
-						/>
-					{:else if playerCharacters[i].mouth === "Flat"}
-						<path
-							d="M65 96 L95 96"
-							fill="none"
-							stroke="#090d18"
-							stroke-width="6"
-							stroke-linecap="round"
-						/>
-					{:else if playerCharacters[i].mouth === "Happy"}
-						<path
-							d="M65 94 Q80 108 95 94"
-							fill="none"
-							stroke="#090d18"
-							stroke-width="6"
-							stroke-linecap="round"
-						/>
-					{/if}
-				</svg>
-			{/if}
-
-			<div>
-				{name}: {playerRoles[i]}, {playerCards[i]}
+				{:else if role === "yarddog"}
+					<div class="notes-box">
+						<h2>Notes</h2>
+						<textarea
+							bind:value={notes}
+							placeholder="Write down clues, ideas, or anything you want to remember..."
+						></textarea>
+					</div>
+				{/if}
 			</div>
 		</div>
-{/each}
+	</main>
+	
+	<section class="game-rules">
+		<div class="rule-card">
+			<h2>♠ How to Play</h2>
 
-<br>
+			<p>
+				SASBMEAEG is a 2+ player card game built around finding the hidden pattern in a sequence of
+				cards. It's a more mathematical, structured version of the Game of Mao that only includes the
+				mechanical rules (those relating to the card itself) and none of the performance rules (those
+				relating to the action of a player while playing a card).
+			</p>
 
-<div class="playing-row">
-	{#each cards as card}
-		<button
-				disabled={!ruleSubmitted}
-				onclick={() => play(card)}
-		>
-			<img
-				class="played-card"
-				src={cardImage(card.rank, card.suit)}
-				alt="{card.rank} of {card.suit}"
-			/>
-		</button>
-	{/each}
+			<p>
+				One player, the <strong>Yardmaster</strong>, defines the secret ruleset for that round, which
+				determines whether a played card is correct or incorrect based on the previous sequence of
+				cards. They then flip over one card (or more, depending on the ruleset) to start the sequence.
+				The other players, <strong>Yard Dogs</strong>, take turns playing a card, and the Yardmaster
+				says whether it fits the secret ruleset. If it's valid, the card is added to the sequence and
+				the turn is complete. If it's invalid, the card is still added to the sequence but marked
+				invalid with a slight vertical offset, and the player must draw another card from the deck
+				before the turn is complete.
+			</p>
+
+			<p>
+				After all Yard Dogs have played once, the Yardmaster plays a card, and the cycle repeats. The
+				player who runs out of cards first — or alternatively, whoever first correctly learns the
+				ruleset — becomes the Yardmaster in the next round. Yard Dogs are allowed to ask the Yardmaster
+				for hints about the secret ruleset, within reason.
+			</p>
+		</div>
+
+		<div class="rule-card">
+			<h2>♥ Meta Rules</h2>
+
+			<ol>
+				<li>
+					The secret ruleset must only pertain to physical qualities of the card (number, suit,
+					color, symmetry, pip structure, etc.). That is, given only a ruleset and sequence of
+					cards, it must be possible to reconstruct which cards are valid and which are invalid.
+				</li>
+
+				<li>
+					The number of cards flipped at the start must be the exact amount needed for calculating
+					the validity of the next card. For example, if the secret rule is "greater than the
+					difference of the previous two cards," two cards must be flipped face-up at the start.
+				</li>
+
+				<li>
+					The secret ruleset must contain no more than 5 operations, where an operation is one of
+					the following: addition, subtraction, multiplication, modulus, validity. Exceptions can be
+					made as long as the secret ruleset is sufficiently simple — for example, "last 5 cards
+					must be a better poker hand than before."
+				</li>
+
+				<li>TODO</li>
+			</ol>
+		</div>
+	</section>
+
 </div>
-
-<div class="played-row">
-	{#each state as card}
-		<img
-			class="played-card"
-			class:bad-offset={!card.good}
-			src={cardImage(card.rank, card.suit)}
-			alt="{card.rank} of {card.suit}"
-		/>
-	{/each}
-</div>
-
-<style>
-	.player-row {
-		display: flex;
-		align-items: center;
-		gap: 10px;
-		margin-bottom: 8px;
-	}
-
-	.player-character {
-		width: 48px;
-		height: 54px;
-		flex-shrink: 0;
-	}
-
-	.played-row {
-		display: flex;
-		flex-direction: row;
-		align-items: flex-end;
-		gap: 2px;
-		padding: 20px;
-	}
-
-	.played-card {
-		width: 80px;
-	}
-
-	.played-card.bad-offset {
-		transform: translateY(-18px);
-	}
-</style>

@@ -28,9 +28,80 @@ function normalizeCharacter(character: any): CharacterData {
         return {...defaultCharacter};
     }
 
-    const validColors = ["Purple", "Blue", "Green", "Red", "Yellow"];
-    const validEyes = ["Dot", "Sleepy", "Big"];
-    const validMouths = ["Smile", "Flat", "Happy"];
+    const validColors = [
+        "Purple",
+        "Blue",
+        "Green",
+        "Red",
+        "Yellow",
+        "Orange",
+        "Pink",
+        "Cyan",
+        "Teal",
+        "Lime",
+        "Gold",
+        "Coral",
+        "Lavender",
+        "Mint",
+        "Sky",
+        "White",
+        "Black"
+    ];
+    const validEyes = [
+        "Dot",
+        "Sleepy",
+        "Big",
+        "Wide",
+        "Angry",
+        "Cross-Eyed",
+        "Starry",
+        "Laser",
+        "Monocle",
+        "Glasses",
+        "Shades",
+        "Heart",
+        "X",
+        "Spiral",
+        "Suspicious",
+        "Robot",
+        "Googly",
+        "Anime",
+        "Closed",
+        "One-Eyed",
+        "Three-Eyed",
+        "Alien"
+    ];
+    const validMouths = [
+        "Smile",
+        "Flat",
+        "Happy",
+        "Open",
+        "Frown",
+        "Grin",
+        "Teeth",
+        "Fang",
+        "Vampire",
+        "Mustache",
+        "Big Mustache",
+        "Handlebar",
+        "Pipe",
+        "Goatee",
+        "Beard",
+        "Goofy",
+        "Surprised",
+        "Yell",
+        "Whistle",
+        "Cat",
+        "Duck",
+        "Robot",
+        "Money",
+        "Tongue",
+        "Derp",
+        "UwU",
+        "Evil",
+        "Clown",
+        "Monocle Mustache"
+    ];
 
     return {
         color: validColors.includes(character.color)
@@ -221,10 +292,12 @@ wss.on("connection", (socket) => {
                     JSON.stringify({
                         type: "joined",
                         role,
+                        playerIds: [...room.playerIds],
                         playerNames: [...room.playerIds].map(id => room.playerNames.get(id)),
                         playerCharacters: [...room.playerIds].map(id => room.playerCharacters.get(id)),
                         playerRoles: [...room.playerIds].map(id => room.playerRoles.get(id)),
                         playerCards: [...room.playerIds].map(id => room.playerCards.get(id)?.length),
+                        currentTurnPlayerId: room.playerOrder[room.currentTurn] ?? null,
                         state: room.state,
                         ruleSubmitted: room.ruleSubmitted,
                         ruleCode: role === "yardmaster" ? room.ruleCode : null
@@ -269,54 +342,64 @@ wss.on("connection", (socket) => {
                 update(msg.roomId);
 
                 return;
-            case "yield":
-                // Player yields rule
-                const newYardmaster = room.playerNames.getKey(msg.playerName)
+            case "yield": {
+                // Player yields rule to another Yard Dog
+                const newYardmaster = msg.newYardmasterId;
 
-                if (room.playerRoles.get(msg.playerId) !== "yardmaster" || !newYardmaster) {
+                if (
+                    room.playerRoles.get(msg.playerId) !== "yardmaster" ||
+                    !newYardmaster ||
+                    room.playerRoles.get(newYardmaster) !== "yarddog"
+                ) {
                     console.log(
                         "Rejected yield to",
-                        msg.playerName,
+                        newYardmaster,
                         "from",
                         msg.playerId
                     );
 
                     return;
                 }
-                
+
+                // Transfer roles
                 room.playerRoles.set(msg.playerId, "yarddog");
                 room.playerRoles.set(newYardmaster, "yardmaster");
                 room.yardmaster = newYardmaster;
-                
-                socket.send(
-                    JSON.stringify({
-                        type: "joined",
-                        role: "yarddog",
-                        playerNames: [...room.playerIds].map(id => room.playerNames.get(id)),
-                        playerCharacters: [...room.playerIds].map(id => room.playerCharacters.get(id)),
-                        playerRoles: [...room.playerIds].map(id => room.playerRoles.get(id)),
-                        state: room.state,
-                        ruleSubmitted: room.ruleSubmitted,
-                        ruleCode: null
-                    })
-                );
-                
-                room.clients.get(newYardmaster).send(
-                    JSON.stringify({
-                        type: "joined",
-                        role: "yardmaster",
-                        playerNames: [...room.playerIds].map(id => room.playerNames.get(id)),
-                        playerCharacters: [...room.playerIds].map(id => room.playerCharacters.get(id)),
-                        playerRoles: [...room.playerIds].map(id => room.playerRoles.get(id)),
-                        state: room.state,
-                        ruleSubmitted: room.ruleSubmitted,
-                        ruleCode: null
-                    })
-                );
+
+                const playerIds = [...room.playerIds];
+
+                // Tell everyone their updated role/state
+                for (const id of playerIds) {
+                    room.clients.get(id)?.send(
+                        JSON.stringify({
+                            type: "joined",
+                            role: room.playerRoles.get(id),
+                            playerIds,
+                            playerNames: playerIds.map(
+                                id => room.playerNames.get(id)
+                            ),
+                            playerCharacters: playerIds.map(
+                                id => room.playerCharacters.get(id)
+                            ),
+                            playerRoles: playerIds.map(
+                                id => room.playerRoles.get(id)
+                            ),
+                            state: room.state,
+                            ruleSubmitted: room.ruleSubmitted,
+                            ruleCode:
+                                room.playerRoles.get(id) === "yardmaster"
+                                    ? room.ruleCode
+                                    : null,
+                            currentTurnPlayerId:
+                                room.playerOrder[room.currentTurn] ?? null
+                        })
+                    );
+                }
 
                 update(room.roomId);
 
                 return;
+            }
             case "spectate":
                 // Player switches to spectator
                 if (!room.playerIds.has(msg.playerId)) {
@@ -333,12 +416,14 @@ wss.on("connection", (socket) => {
                     JSON.stringify({
                         type: "joined",
                         role: "spectator",
+                        playerIds: [...room.playerIds],
                         playerNames: [...room.playerIds].map(id => room.playerNames.get(id)),
                         playerCharacters: [...room.playerIds].map(id => room.playerCharacters.get(id)),
                         playerRoles: [...room.playerIds].map(id => room.playerRoles.get(id)),
                         state: room.state,
                         ruleSubmitted: room.ruleSubmitted,
-                        ruleCode: null
+                        ruleCode: null,
+                        currentTurnPlayerId: room.playerOrder[room.currentTurn] ?? null
                     })
                 );
 
@@ -358,12 +443,14 @@ wss.on("connection", (socket) => {
                     JSON.stringify({
                         type: "joined",
                         role: "yarddog",
+                        playerIds: [...room.playerIds],
                         playerNames: [...room.playerIds].map(id => room.playerNames.get(id)),
                         playerCharacters: [...room.playerIds].map(id => room.playerCharacters.get(id)),
                         playerRoles: [...room.playerIds].map(id => room.playerRoles.get(id)),
                         state: room.state,
                         ruleSubmitted: room.ruleSubmitted,
-                        ruleCode: null
+                        ruleCode: null,
+                        currentTurnPlayerId: room.playerOrder[room.currentTurn] ?? null
                     })
                 );
 
@@ -467,10 +554,12 @@ function update(
 
         const message: any = {
             type: "updated",
+            playerIds: [...room.playerIds],
             playerNames: [...room.playerIds].map(id => room.playerNames.get(id)),
             playerCharacters: [...room.playerIds].map(id => room.playerCharacters.get(id)),
             playerRoles: [...room.playerIds].map(id => room.playerRoles.get(id)),
             playerCards: [...room.playerIds].map(id => room.playerCards.get(id)?.length),
+            currentTurnPlayerId: room.playerOrder[room.currentTurn] ?? null,
             state: room.state,
             ruleSubmitted: room.ruleSubmitted
         };
