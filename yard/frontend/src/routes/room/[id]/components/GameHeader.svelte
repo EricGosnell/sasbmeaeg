@@ -13,7 +13,7 @@
 		</button>
 	{:else}
 		<button class="end-game" type="button">
-			Leave Game
+			Leave Room
 		</button>
 	{/if}
 </header>
