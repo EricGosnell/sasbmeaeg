@@ -11,6 +11,10 @@
 		<button class="end-game" type="button">
 			End Game
 		</button>
+	{:else}
+		<button class="end-game" type="button">
+			Leave Game
+		</button>
 	{/if}
 </header>
 
