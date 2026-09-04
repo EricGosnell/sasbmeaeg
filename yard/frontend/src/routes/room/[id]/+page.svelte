@@ -231,6 +231,8 @@
 					{role}
 					{ruleSubmitted}
 					{play}
+					{playerId}
+					{currentTurnPlayerId}
 				/>
 			</div>
 

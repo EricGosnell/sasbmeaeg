@@ -9,7 +9,9 @@
 		cards,
 		role,
 		ruleSubmitted,
-		play
+		play,
+		playerId,
+		currentTurnPlayerId
 	}: {
 		playerName: string;
 		playerCharacter: any;
@@ -17,19 +19,34 @@
 		role: string;
 		ruleSubmitted: boolean;
 		play: (card: CardData) => void;
+		playerId: string;
+		currentTurnPlayerId: string;
 	} = $props();
+
+	const displayRole = $derived(
+        role === "yardmaster"
+            ? "Yardmaster"
+            : role === "yarddog"
+                ? "Yard Dog"
+                : "Spectator"
+    );
+
+    const isMyTurn = $derived(playerId === currentTurnPlayerId);
+
 </script>
 
-<div class="player-area">
+<div class:my-turn={isMyTurn} class="player-area">
 	<div class="character-section">
-		<Character
-			character={playerCharacter}
-			size="normal"
-			ariaLabel="Your character"
-		/>
+		{#if playerCharacter}
+			<Character character={playerCharacter} />
+		{/if}
 
 		<div class="player-name">
 			{playerName}
+		</div>
+
+		<div class="player-role">
+			{displayRole}
 		</div>
 	</div>
 
@@ -62,6 +79,16 @@
 		background: rgba(245, 241, 230, 0.06);
 		border: 2px solid rgba(255, 255, 255, 0.12);
 		border-radius: 16px;
+		transition:
+			border-color 0.2s ease,
+			box-shadow 0.2s ease;
+	}
+
+	.player-area.my-turn {
+		border-color: #ffd166;
+		box-shadow:
+			0 0 8px rgba(255, 209, 102, 0.7),
+			0 0 20px rgba(255, 209, 102, 0.35);
 	}
 
 	.character-section {
@@ -79,7 +106,13 @@
 		font-weight: 700;
 		text-align: center;
 		margin-top: 4px;
-		white-space: nowrap;
+	}
+
+	.player-role {
+		color: #d8d2c0;
+		font-size: 0.8rem;
+		text-align: center;
+		margin-top: 2px;
 	}
 
 	.hand-section {
@@ -101,8 +134,6 @@
 		border: none;
 		border-radius: 8px;
 		box-shadow: none;
-		cursor: pointer;
-		transition: transform 0.15s ease;
 	}
 
 	.hand-card:hover {
