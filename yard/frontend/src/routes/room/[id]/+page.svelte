@@ -204,6 +204,17 @@
 </script>
 
 <div class="game-page">
+	<div class="floaters" aria-hidden="true">
+		<span class="suit s1">♠</span>
+		<span class="suit s2">♥</span>
+		<span class="suit s3">♦</span>
+		<span class="suit s4">♣</span>
+		<span class="suit s5">♠</span>
+		<span class="suit s6">♥</span>
+		<span class="suit s7">♦</span>
+		<span class="suit s8">♣</span>
+	</div>
+
 	<GameHeader {roomId} {role} />
 
 	<main class="game-layout">
