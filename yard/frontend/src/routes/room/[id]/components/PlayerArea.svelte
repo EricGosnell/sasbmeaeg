@@ -92,28 +92,48 @@
 	}
 
 	.character-section {
-		flex-shrink: 0;
-		width: 100px;
-		height: 160px;
-		display: flex;
-		flex-direction: column;
-		align-items: center;
-		justify-content: flex-end;
-	}
+        flex: 0 0 100px;
+        min-width: 0;
+        width: 100px;
+        height: 160px;
+
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: flex-end;
+        overflow: hidden;
+    }
 
 	.player-name {
-		color: #f5f1e6;
-		font-weight: 700;
-		text-align: center;
-		margin-top: 4px;
-	}
+        width: 100%;
+        max-width: 100px;
+        min-width: 0;
+        box-sizing: border-box;
+
+        color: #f5f1e6;
+        font-weight: 700;
+        text-align: center;
+        margin-top: 4px;
+
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
 
 	.player-role {
-		color: #d8d2c0;
-		font-size: 0.8rem;
-		text-align: center;
-		margin-top: 2px;
-	}
+        width: 100%;
+        min-width: 0;
+        box-sizing: border-box;
+
+        color: #d8d2c0;
+        font-size: 0.8rem;
+        text-align: center;
+        margin-top: 2px;
+
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
 
 	.hand-section {
 		display: flex;
@@ -162,9 +182,44 @@
 		}
 
 		.character-section {
-			width: 70px;
-			height: 120px;
-		}
+            flex-shrink: 0;
+            width: 100px;
+            height: 160px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: flex-end;
+        }
+
+        .player-name {
+            width: 100%;
+            min-width: 0;
+            box-sizing: border-box;
+
+            color: #f5f1e6;
+            font-weight: 700;
+            text-align: center;
+            margin-top: 4px;
+
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .player-role {
+            width: 100%;
+            min-width: 0;
+            box-sizing: border-box;
+
+            color: #d8d2c0;
+            font-size: 0.8rem;
+            text-align: center;
+            margin-top: 2px;
+
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
 
 		.hand-section {
 			height: 135px;
