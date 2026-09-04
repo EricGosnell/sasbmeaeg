@@ -37,8 +37,20 @@
 				<div class="player-info">
 					<div class="player-name">{name}</div>
 					<div class="player-details">
-						{playerRoles[i]}, {playerCards[i]}
-					</div>
+                        <div class="player-role">
+                            {playerRoles[i] === "yardmaster"
+                                ? "Yardmaster"
+                                : playerRoles[i] === "yarddog"
+                                    ? "Yard Dog"
+                                    : "Spectator"}
+                        </div>
+
+                        <div class="card-backs">
+                            {#each Array(playerCards[i] ?? 0) as _}
+                                <div class="card-back"></div>
+                            {/each}
+                        </div>
+                    </div>
 				</div>
 			</div>
 		{/if}
@@ -57,22 +69,16 @@
 	}
 
 	.player {
-		display: flex;
-		align-items: center;
-		gap: 8px;
-		flex: 0 0 190px;
-		width: 200px;
-		min-width: 200px;
-		box-sizing: border-box;
-		padding: 8px 10px;
-		background: rgba(245, 241, 230, 0.06);
-		border: 2px solid rgba(255, 255, 255, 0.12);
-		border-radius: 12px;
-		transition:
-			border-color 0.2s ease,
-			background 0.2s ease,
-			box-shadow 0.2s ease;
-	}
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        flex: 0 0 auto;
+        padding: 8px 12px;
+        background: rgba(245, 241, 230, 0.06);
+        border: 2px solid rgba(255, 255, 255, 0.12);
+        border-radius: 12px;
+    }
 
 	.player.current-turn {
 		border-color: #ffd166;
@@ -83,13 +89,13 @@
 	}
 
 	.player-info {
-		display: flex;
-		flex-direction: column;
-		justify-content: center;
-		flex: 1 1 auto;
-		min-width: 0;
-		overflow: hidden;
-	}
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        text-align: center;
+        min-width: 0;
+    }
 
 	.player-name {
 		display: block;
@@ -102,14 +108,40 @@
 		text-overflow: ellipsis;
 	}
 
-	.player-details {
-		display: block;
-		width: 100%;
-		color: #d8d2c0;
-		font-size: 0.8rem;
-		line-height: 1.2;
-		white-space: nowrap;
-		overflow: hidden;
-		text-overflow: ellipsis;
-	}
+    .player-details {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 4px;
+        color: #d8d2c0;
+        font-size: 0.8rem;
+    }
+
+    .player-role {
+        font-weight: 600;
+        white-space: nowrap;
+    }
+
+    .card-backs {
+        display: flex;
+        justify-content: center;
+        align-items: flex-end;
+        height: 27px;
+    }
+
+    .card-back {
+        width: 17px;
+        height: 25px;
+        background: #c2bec4ff;
+        border: 2px solid #090d18;
+        border-radius: 4px;
+        box-sizing: border-box;
+        margin-left: -10px;
+        box-shadow: 0 1px 2px rgba(0, 0, 0, 0.35);
+    }
+
+    .card-back:first-child {
+        margin-left: 0;
+    }
+
 </style>
