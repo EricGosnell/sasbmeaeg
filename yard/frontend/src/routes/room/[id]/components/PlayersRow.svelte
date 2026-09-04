@@ -3,23 +3,30 @@
 
 	let {
 		playerName,
+		playerIds,
 		playerNames,
 		playerCharacters,
 		playerRoles,
-		playerCards
+		playerCards,
+		currentTurnPlayerId
 	}: {
 		playerName: string;
+		playerIds: string[];
 		playerNames: string[];
 		playerCharacters: any[];
 		playerRoles: string[];
 		playerCards: number[];
+		currentTurnPlayerId: string;
 	} = $props();
 </script>
 
 <div class="players-row">
 	{#each playerNames as name, i}
 		{#if name !== playerName}
-			<div class="player">
+			<div
+				class="player"
+				class:current-turn={playerIds[i] === currentTurnPlayerId}
+			>
 				{#if playerCharacters[i]}
 					<Character
 						character={playerCharacters[i]}
@@ -61,6 +68,18 @@
 		background: rgba(245, 241, 230, 0.06);
 		border: 2px solid rgba(255, 255, 255, 0.12);
 		border-radius: 12px;
+		transition:
+			border-color 0.2s ease,
+			background 0.2s ease,
+			box-shadow 0.2s ease;
+	}
+
+	.player.current-turn {
+		border-color: #ffd166;
+		background: rgba(255, 209, 102, 0.16);
+		box-shadow:
+			0 0 0 2px rgba(255, 209, 102, 0.25),
+			0 0 14px rgba(255, 209, 102, 0.35);
 	}
 
 	.player-info {

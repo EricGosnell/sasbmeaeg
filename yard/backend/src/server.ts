@@ -292,10 +292,12 @@ wss.on("connection", (socket) => {
                     JSON.stringify({
                         type: "joined",
                         role,
+                        playerIds: [...room.playerIds],
                         playerNames: [...room.playerIds].map(id => room.playerNames.get(id)),
-                        playerCharacters: [...room.playerIds].map(id => room.playerCharacters.get(id) ?? defaultCharacter),
+                        playerCharacters: [...room.playerIds].map(id => room.playerCharacters.get(id)),
                         playerRoles: [...room.playerIds].map(id => room.playerRoles.get(id)),
                         playerCards: [...room.playerIds].map(id => room.playerCards.get(id)?.length),
+                        currentTurnPlayerId: room.playerOrder[room.currentTurn] ?? null,
                         state: room.state,
                         ruleSubmitted: room.ruleSubmitted,
                         ruleCode: role === "yardmaster" ? room.ruleCode : null
@@ -363,12 +365,14 @@ wss.on("connection", (socket) => {
                     JSON.stringify({
                         type: "joined",
                         role: "yarddog",
+                        playerIds: [...room.playerIds],
                         playerNames: [...room.playerIds].map(id => room.playerNames.get(id)),
-                        playerCharacters: [...room.playerIds].map(id => room.playerCharacters.get(id) ?? defaultCharacter),
+                        playerCharacters: [...room.playerIds].map(id => room.playerCharacters.get(id)),
                         playerRoles: [...room.playerIds].map(id => room.playerRoles.get(id)),
                         state: room.state,
                         ruleSubmitted: room.ruleSubmitted,
-                        ruleCode: null
+                        ruleCode: null,
+                        currentTurnPlayerId: room.playerOrder[room.currentTurn] ?? null
                     })
                 );
                 
@@ -376,12 +380,14 @@ wss.on("connection", (socket) => {
                     JSON.stringify({
                         type: "joined",
                         role: "yardmaster",
+                        playerIds: [...room.playerIds],
                         playerNames: [...room.playerIds].map(id => room.playerNames.get(id)),
-                        playerCharacters: [...room.playerIds].map(id => room.playerCharacters.get(id) ?? defaultCharacter),
+                        playerCharacters: [...room.playerIds].map(id => room.playerCharacters.get(id)),
                         playerRoles: [...room.playerIds].map(id => room.playerRoles.get(id)),
                         state: room.state,
                         ruleSubmitted: room.ruleSubmitted,
-                        ruleCode: null
+                        ruleCode: null,
+                        currentTurnPlayerId: room.playerOrder[room.currentTurn] ?? null
                     })
                 );
 
@@ -404,12 +410,14 @@ wss.on("connection", (socket) => {
                     JSON.stringify({
                         type: "joined",
                         role: "spectator",
+                        playerIds: [...room.playerIds],
                         playerNames: [...room.playerIds].map(id => room.playerNames.get(id)),
-                        playerCharacters: [...room.playerIds].map(id => room.playerCharacters.get(id) ?? defaultCharacter),
+                        playerCharacters: [...room.playerIds].map(id => room.playerCharacters.get(id)),
                         playerRoles: [...room.playerIds].map(id => room.playerRoles.get(id)),
                         state: room.state,
                         ruleSubmitted: room.ruleSubmitted,
-                        ruleCode: null
+                        ruleCode: null,
+                        currentTurnPlayerId: room.playerOrder[room.currentTurn] ?? null
                     })
                 );
 
@@ -429,12 +437,14 @@ wss.on("connection", (socket) => {
                     JSON.stringify({
                         type: "joined",
                         role: "yarddog",
+                        playerIds: [...room.playerIds],
                         playerNames: [...room.playerIds].map(id => room.playerNames.get(id)),
-                        playerCharacters: [...room.playerIds].map(id => room.playerCharacters.get(id) ?? defaultCharacter),
+                        playerCharacters: [...room.playerIds].map(id => room.playerCharacters.get(id)),
                         playerRoles: [...room.playerIds].map(id => room.playerRoles.get(id)),
                         state: room.state,
                         ruleSubmitted: room.ruleSubmitted,
-                        ruleCode: null
+                        ruleCode: null,
+                        currentTurnPlayerId: room.playerOrder[room.currentTurn] ?? null
                     })
                 );
 
@@ -538,10 +548,12 @@ function update(
 
         const message: any = {
             type: "updated",
+            playerIds: [...room.playerIds],
             playerNames: [...room.playerIds].map(id => room.playerNames.get(id)),
-            playerCharacters: [...room.playerIds].map(id => room.playerCharacters.get(id) ?? defaultCharacter),
+            playerCharacters: [...room.playerIds].map(id => room.playerCharacters.get(id)),
             playerRoles: [...room.playerIds].map(id => room.playerRoles.get(id)),
             playerCards: [...room.playerIds].map(id => room.playerCards.get(id)?.length),
+            currentTurnPlayerId: room.playerOrder[room.currentTurn] ?? null,
             state: room.state,
             ruleSubmitted: room.ruleSubmitted
         };

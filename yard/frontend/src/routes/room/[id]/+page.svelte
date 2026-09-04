@@ -20,15 +20,17 @@
 	let role = $state("");
 	let playerName = $state("");
 	let playerCharacter = $state<any>(null);
+	let playerIds = $state<string[]>([]);
 	let playerNames = $state<string[]>([]);
 	let playerCharacters = $state<any[]>([]);
 	let playerRoles = $state<string[]>([]);
 	let playerCards = $state<number[]>([]);
+	let currentTurnPlayerId = $state("");
 
 	let cards = $state<CardData[]>([]);
 	let state = $state<CardData[]>([]);
 
-	let ruleSubmitted = $state(false);
+	let ruleSubmitted = false;
 	let ruleCode = $state("");
 
 	let code = $state(`function rules(state) {
@@ -71,14 +73,13 @@
 
 					case "joined":
 						role = msg.role;
-						state = msg.state ?? [];
+						state = msg.state;
+						playerIds = msg.playerIds ?? [];
 						playerNames = msg.playerNames ?? [];
 						playerCharacters = msg.playerCharacters ?? [];
 						playerRoles = msg.playerRoles ?? [];
 						playerCards = msg.playerCards ?? [];
-
-						console.log("JOINED NAMES:", playerNames);
-						console.log("JOINED CHARACTERS:", playerCharacters);
+						currentTurnPlayerId = msg.currentTurnPlayerId ?? "";
 
 						ruleSubmitted = msg.ruleSubmitted;
 
@@ -90,14 +91,12 @@
 					case "updated":
 						cards = msg.cards ?? [];
 						state = msg.state ?? [];
+						playerIds = msg.playerIds ?? [];
 						playerNames = msg.playerNames ?? [];
 						playerCharacters = msg.playerCharacters ?? [];
 						playerRoles = msg.playerRoles ?? [];
 						playerCards = msg.playerCards ?? [];
-
-						console.log("UPDATED NAMES:", playerNames);
-						console.log("UPDATED CHARACTERS:", playerCharacters);
-
+						currentTurnPlayerId = msg.currentTurnPlayerId ?? "";
 						ruleSubmitted = msg.ruleSubmitted;
 						break;
 
@@ -210,10 +209,12 @@
 		<div class="players-area">
 			<PlayersRow
 				{playerName}
+				{playerIds}
 				{playerNames}
 				{playerCharacters}
 				{playerRoles}
 				{playerCards}
+				{currentTurnPlayerId}
 			/>
 		</div>
 
