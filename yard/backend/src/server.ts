@@ -342,58 +342,64 @@ wss.on("connection", (socket) => {
                 update(msg.roomId);
 
                 return;
-            case "yield":
-                // Player yields rule
-                const newYardmaster = room.playerNames.getKey(msg.playerName)
+            case "yield": {
+                // Player yields rule to another Yard Dog
+                const newYardmaster = msg.newYardmasterId;
 
-                if (room.playerRoles.get(msg.playerId) !== "yardmaster" || !newYardmaster) {
+                if (
+                    room.playerRoles.get(msg.playerId) !== "yardmaster" ||
+                    !newYardmaster ||
+                    room.playerRoles.get(newYardmaster) !== "yarddog"
+                ) {
                     console.log(
                         "Rejected yield to",
-                        msg.playerName,
+                        newYardmaster,
                         "from",
                         msg.playerId
                     );
 
                     return;
                 }
-                
+
+                // Transfer roles
                 room.playerRoles.set(msg.playerId, "yarddog");
                 room.playerRoles.set(newYardmaster, "yardmaster");
                 room.yardmaster = newYardmaster;
-                
-                socket.send(
-                    JSON.stringify({
-                        type: "joined",
-                        role: "yarddog",
-                        playerIds: [...room.playerIds],
-                        playerNames: [...room.playerIds].map(id => room.playerNames.get(id)),
-                        playerCharacters: [...room.playerIds].map(id => room.playerCharacters.get(id)),
-                        playerRoles: [...room.playerIds].map(id => room.playerRoles.get(id)),
-                        state: room.state,
-                        ruleSubmitted: room.ruleSubmitted,
-                        ruleCode: null,
-                        currentTurnPlayerId: room.playerOrder[room.currentTurn] ?? null
-                    })
-                );
-                
-                room.clients.get(newYardmaster).send(
-                    JSON.stringify({
-                        type: "joined",
-                        role: "yardmaster",
-                        playerIds: [...room.playerIds],
-                        playerNames: [...room.playerIds].map(id => room.playerNames.get(id)),
-                        playerCharacters: [...room.playerIds].map(id => room.playerCharacters.get(id)),
-                        playerRoles: [...room.playerIds].map(id => room.playerRoles.get(id)),
-                        state: room.state,
-                        ruleSubmitted: room.ruleSubmitted,
-                        ruleCode: null,
-                        currentTurnPlayerId: room.playerOrder[room.currentTurn] ?? null
-                    })
-                );
+
+                const playerIds = [...room.playerIds];
+
+                // Tell everyone their updated role/state
+                for (const id of playerIds) {
+                    room.clients.get(id)?.send(
+                        JSON.stringify({
+                            type: "joined",
+                            role: room.playerRoles.get(id),
+                            playerIds,
+                            playerNames: playerIds.map(
+                                id => room.playerNames.get(id)
+                            ),
+                            playerCharacters: playerIds.map(
+                                id => room.playerCharacters.get(id)
+                            ),
+                            playerRoles: playerIds.map(
+                                id => room.playerRoles.get(id)
+                            ),
+                            state: room.state,
+                            ruleSubmitted: room.ruleSubmitted,
+                            ruleCode:
+                                room.playerRoles.get(id) === "yardmaster"
+                                    ? room.ruleCode
+                                    : null,
+                            currentTurnPlayerId:
+                                room.playerOrder[room.currentTurn] ?? null
+                        })
+                    );
+                }
 
                 update(room.roomId);
 
                 return;
+            }
             case "spectate":
                 // Player switches to spectator
                 if (!room.playerIds.has(msg.playerId)) {

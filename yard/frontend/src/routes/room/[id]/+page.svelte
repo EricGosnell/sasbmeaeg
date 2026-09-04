@@ -168,12 +168,12 @@
 		);
 	}
 
-	async function yieldRule() {
+	async function yieldRule(newYardmasterId: string) {
 		send({
 			type: "yield",
 			roomId,
 			playerId,
-			playerName
+			newYardmasterId
 		});
 	}
 
@@ -258,6 +258,10 @@
 						{yieldRule}
 						{beSpectator}
 						{beYarddog}
+						{playerId}
+						{playerIds}
+						{playerNames}
+						{playerRoles}
 					/>
 				{:else if role === "yarddog"}
 					<div class="notes-box">
