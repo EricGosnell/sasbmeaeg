@@ -43,7 +43,7 @@ body {
 
 .bottom-area {
 	display: grid;
-	grid-template-columns: minmax(0, 1fr) minmax(300px, 380px);
+	grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
 	gap: 12px;
 	align-items: stretch;
 	width: 100%;
@@ -62,13 +62,6 @@ body {
 }
 
 
-
-@media (max-width: 900px) {
-	.bottom-area {
-		grid-template-columns: minmax(0, 1fr) minmax(240px, 300px);
-	}
-}
-
 @media (max-width: 700px) {
 	.game-page {
 		padding: 8px;
@@ -86,5 +79,56 @@ body {
 	.bottom-area {
 		grid-template-columns: 1fr;
 		gap: 8px;
+	}
+}
+
+.notes-box {
+	width: 100%;
+	height: 100%;
+	min-height: 180px;
+	box-sizing: border-box;
+	padding: 20px;
+	background: rgba(245, 241, 230, 0.06);
+	border: 2px solid rgba(255, 255, 255, 0.12);
+	border-radius: 16px;
+	display: flex;
+	flex-direction: column;
+	gap: 12px;
+}
+
+.notes-box h2 {
+	margin: 0;
+	color: #f5f1e6;
+	font-size: 1.1rem;
+}
+
+.notes-box textarea {
+	flex: 1;
+	width: 100%;
+	min-height: 0;
+	box-sizing: border-box;
+	resize: none;
+	padding: 12px;
+	background: rgba(0, 0, 0, 0.2);
+	border: 2px solid rgba(255, 255, 255, 0.12);
+	border-radius: 10px;
+	color: #f5f1e6;
+	font: inherit;
+	outline: none;
+}
+
+.notes-box textarea:focus {
+	border-color: #ffd166;
+	box-shadow: 0 0 8px rgba(255, 209, 102, 0.25);
+}
+
+.notes-box textarea::placeholder {
+	color: #a9a395;
+}
+
+@media (max-width: 700px) {
+	.notes-box {
+		min-height: 150px;
+		padding: 12px;
 	}
 }

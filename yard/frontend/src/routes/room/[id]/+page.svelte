@@ -26,6 +26,7 @@
 	let playerRoles = $state<string[]>([]);
 	let playerCards = $state<number[]>([]);
 	let currentTurnPlayerId = $state("");
+	let notes = $state("");
 
 	let cards = $state<CardData[]>([]);
 	let state = $state<CardData[]>([]);
@@ -237,15 +238,25 @@
 			</div>
 
 			<div class="rule-area">
-				<RuleBox
-					{role}
-					{ruleSubmitted}
-					bind:code
-					{submitRule}
-					{yieldRule}
-					{beSpectator}
-					{beYarddog}
-				/>
+				{#if role === "yardmaster"}
+					<RuleBox
+						{role}
+						{ruleSubmitted}
+						bind:code
+						{submitRule}
+						{yieldRule}
+						{beSpectator}
+						{beYarddog}
+					/>
+				{:else if role === "yarddog"}
+					<div class="notes-box">
+						<h2>Notes</h2>
+						<textarea
+							bind:value={notes}
+							placeholder="Write down clues, ideas, or anything you want to remember..."
+						></textarea>
+					</div>
+				{/if}
 			</div>
 		</div>
 	</main>
