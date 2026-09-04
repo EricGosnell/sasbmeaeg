@@ -271,4 +271,63 @@
 			</div>
 		</div>
 	</main>
+	
+	<section class="game-rules">
+		<div class="rule-card">
+			<h2>♠ How to Play</h2>
+
+			<p>
+				SASBMEAEG is a 2+ player card game built around finding the hidden pattern in a sequence of
+				cards. It's a more mathematical, structured version of the Game of Mao that only includes the
+				mechanical rules (those relating to the card itself) and none of the performance rules (those
+				relating to the action of a player while playing a card).
+			</p>
+
+			<p>
+				One player, the <strong>Yardmaster</strong>, defines the secret ruleset for that round, which
+				determines whether a played card is correct or incorrect based on the previous sequence of
+				cards. They then flip over one card (or more, depending on the ruleset) to start the sequence.
+				The other players, <strong>Yard Dogs</strong>, take turns playing a card, and the Yardmaster
+				says whether it fits the secret ruleset. If it's valid, the card is added to the sequence and
+				the turn is complete. If it's invalid, the card is still added to the sequence but marked
+				invalid with a slight vertical offset, and the player must draw another card from the deck
+				before the turn is complete.
+			</p>
+
+			<p>
+				After all Yard Dogs have played once, the Yardmaster plays a card, and the cycle repeats. The
+				player who runs out of cards first — or alternatively, whoever first correctly learns the
+				ruleset — becomes the Yardmaster in the next round. Yard Dogs are allowed to ask the Yardmaster
+				for hints about the secret ruleset, within reason.
+			</p>
+		</div>
+
+		<div class="rule-card">
+			<h2>♥ Meta Rules</h2>
+
+			<ol>
+				<li>
+					The secret ruleset must only pertain to physical qualities of the card (number, suit,
+					color, symmetry, pip structure, etc.). That is, given only a ruleset and sequence of
+					cards, it must be possible to reconstruct which cards are valid and which are invalid.
+				</li>
+
+				<li>
+					The number of cards flipped at the start must be the exact amount needed for calculating
+					the validity of the next card. For example, if the secret rule is "greater than the
+					difference of the previous two cards," two cards must be flipped face-up at the start.
+				</li>
+
+				<li>
+					The secret ruleset must contain no more than 5 operations, where an operation is one of
+					the following: addition, subtraction, multiplication, modulus, validity. Exceptions can be
+					made as long as the secret ruleset is sufficiently simple — for example, "last 5 cards
+					must be a better poker hand than before."
+				</li>
+
+				<li>TODO</li>
+			</ol>
+		</div>
+	</section>
+
 </div>

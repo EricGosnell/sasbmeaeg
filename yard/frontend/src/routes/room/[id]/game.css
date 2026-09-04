@@ -186,6 +186,9 @@ body {
 	box-shadow:
 		0 4px 14px rgba(0, 0, 0, 0.25),
 		inset 0 1px 0 rgba(255, 255, 255, 0.03);
+	
+	resize: vertical;
+	overflow: auto;
 }
 
 .notes-box h2 {
@@ -255,5 +258,67 @@ body {
 	.notes-box {
 		min-height: 150px;
 		padding: 12px;
+	}
+}
+
+.game-rules {
+	position: relative;
+	z-index: 1;
+
+	display: grid;
+	grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+	gap: 12px;
+
+	width: 100%;
+	margin-top: 40px;
+}
+
+.game-rules .rule-card {
+	background: rgba(37, 45, 44, 0.2);
+	border: 1px solid #3b4543;
+	border-radius: 16px;
+	padding: 28px 32px;
+
+	box-shadow:
+		0 4px 14px rgba(0, 0, 0, 0.25),
+		inset 0 1px 0 rgba(255, 255, 255, 0.03);
+
+	backdrop-filter: blur(4px);
+}
+
+.game-rules .rule-card h2 {
+	margin-top: 0;
+	margin-bottom: 16px;
+
+	font-size: 1.5rem;
+	color: #d8ad52;
+}
+
+.game-rules .rule-card p,
+.game-rules .rule-card ol {
+	line-height: 1.7;
+	color: #e8e3d4;
+}
+
+.game-rules .rule-card p {
+	margin-bottom: 16px;
+}
+
+.game-rules .rule-card ol {
+	padding-left: 20px;
+}
+
+.game-rules .rule-card li {
+	margin-bottom: 10px;
+}
+
+@media (max-width: 700px) {
+	.game-rules {
+		grid-template-columns: 1fr;
+		gap: 8px;
+	}
+
+	.game-rules .rule-card {
+		padding: 20px;
 	}
 }
