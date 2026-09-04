@@ -69,16 +69,18 @@
 	}
 
 	.player {
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        gap: 8px;
-        flex: 0 0 auto;
-        padding: 8px 12px;
-        background: rgba(245, 241, 230, 0.06);
-        border: 2px solid rgba(255, 255, 255, 0.12);
-        border-radius: 12px;
-    }
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		gap: 8px;
+		flex: 0 0 auto;
+		width: 180px;
+		box-sizing: border-box;
+		padding: 8px 12px;
+		background: rgba(245, 241, 230, 0.06);
+		border: 2px solid rgba(255, 255, 255, 0.12);
+		border-radius: 12px;
+	}
 
 	.player.current-turn {
 		border-color: #ffd166;
@@ -89,20 +91,17 @@
 	}
 
 	.player-info {
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        justify-content: center;
-        text-align: center;
-        min-width: 0;
-    }
+		display: flex;
+		flex-direction: column;
+		align-items: center;
+		justify-content: center;
+		text-align: center;
+		min-width: 0;
+		width: 110px;
+	}
 
 	.player-name {
-		display: block;
-		width: 100%;
-		color: #f5f1e6;
-		font-weight: 700;
-		line-height: 1.2;
+		width: 110px;
 		white-space: nowrap;
 		overflow: hidden;
 		text-overflow: ellipsis;
