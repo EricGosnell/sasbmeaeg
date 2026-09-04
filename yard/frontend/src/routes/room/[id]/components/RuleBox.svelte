@@ -78,7 +78,7 @@
 								{/each}
 							{:else}
 								<div class="no-yard-dogs">
-									No other Yard Dogs
+									No yard dogs
 								</div>
 							{/if}
 						</div>
@@ -185,32 +185,41 @@
 	}
 
 	.yardmaster-menu {
-		position: absolute;
-		left: 0;
-		top: calc(100% + 6px);
-		min-width: 180px;
-		padding: 6px;
+        position: absolute;
+        left: 0;
+        top: calc(100% + 6px);
+        min-width: 180px;
+        max-width: 180px;
+        padding: 6px;
+        box-sizing: border-box;
 
-		background: #252d2c;
-		border: 1px solid #4a5653;
-		border-radius: 10px;
+        background: #252d2c;
+        border: 1px solid #4a5653;
+        border-radius: 10px;
 
-		box-shadow: 0 8px 20px rgba(0, 0, 0, 0.35);
-		z-index: 20;
-	}
+        box-shadow: 0 8px 20px rgba(0, 0, 0, 0.35);
+        z-index: 20;
+        overflow: hidden;
+    }
 
 	.yardmaster-option {
-		display: block;
-		width: 100%;
-		padding: 9px 12px;
+        display: block;
+        width: 180px;
+        max-width: 180px;
+        box-sizing: border-box;
+        padding: 9px 12px;
 
-		background: transparent;
-		color: #f5f1e6;
+        background: transparent;
+        color: #f5f1e6;
 
-		text-align: left;
-		font-weight: 600;
-		border-radius: 7px;
-	}
+        text-align: left;
+        font-weight: 200;
+
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        border-radius: 7px;
+    }
 
 	.yardmaster-option:hover {
 		background: rgba(6, 214, 160, 0.15);
