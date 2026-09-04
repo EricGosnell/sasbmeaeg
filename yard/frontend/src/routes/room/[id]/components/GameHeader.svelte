@@ -1,5 +1,5 @@
 <script lang="ts">
-	let { roomId } = $props();
+	let { roomId, role }: { roomId: string; role: string } = $props();
 </script>
 
 <header class="game-header">
@@ -7,10 +7,13 @@
 		Room {roomId}
 	</div>
 
-	<button class="end-game" type="button">
-		End Game
-	</button>
+	{#if role === "yardmaster"}
+		<button class="end-game" type="button">
+			End Game
+		</button>
+	{/if}
 </header>
+
 
 <style>
 	.game-header {
@@ -18,7 +21,6 @@
 		align-items: center;
 		justify-content: space-between;
 		width: 100%;
-		max-width: 1400px;
 		margin: 0 auto 20px;
 		padding: 14px 18px;
 		box-sizing: border-box;

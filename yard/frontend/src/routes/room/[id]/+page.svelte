@@ -204,7 +204,7 @@
 </script>
 
 <div class="game-page">
-	<GameHeader {roomId} />
+	<GameHeader {roomId} {role} />
 
 	<main class="game-layout">
 		<div class="players-area">
