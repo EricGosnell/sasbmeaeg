@@ -31,7 +31,7 @@
 	let cards = $state<CardData[]>([]);
 	let state = $state<CardData[]>([]);
 
-	let ruleSubmitted = false;
+	let ruleSubmitted = $state(false);
 	let ruleCode = $state("");
 
 	let code = $state(`function rules(state) {
