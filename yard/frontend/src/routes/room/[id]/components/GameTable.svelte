@@ -7,10 +7,25 @@
 	}: {
 		state: CardData[];
 	} = $props();
+
+	let scrollContainer: HTMLDivElement;
+
+	$effect(() => {
+		// Make Svelte track changes to the array
+		state.length;
+
+		// Wait until the new card has actually been rendered
+		requestAnimationFrame(() => {
+			scrollContainer?.scrollTo({
+				left: scrollContainer.scrollWidth,
+				behavior: "smooth"
+			});
+		});
+	});
 </script>
 
 <div class="table">
-	<div class="table-scroll">
+	<div class="table-scroll" bind:this={scrollContainer}>
 		<div class="played-row">
 			{#each state as card}
 				<img
