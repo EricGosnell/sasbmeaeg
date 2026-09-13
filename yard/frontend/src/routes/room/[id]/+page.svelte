@@ -59,8 +59,10 @@
 
 				switch (msg.type) {
 					case "identitied":
+						playerId = msg.playerId;
 						playerName = msg.playerName;
 						playerCharacter = msg.character;
+						sessionStorage.setItem("playerId", playerId);
 						sessionStorage.setItem("playerName", playerName);
 						sessionStorage.setItem("playerCharacter", playerCharacter);
 
@@ -86,6 +88,7 @@
 						break;
 
 					case "updated":
+						alert(playerId);
 						cards = msg.cards ?? [];
 						state = msg.state ?? [];
 						playerIds = msg.playerIds ?? [];

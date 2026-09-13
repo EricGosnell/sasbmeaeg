@@ -279,6 +279,10 @@ wss.on("connection", (socket) => {
                 );
                 return;
             case "identity": 
+                const playerId =
+                    msg.playerId ||
+                    crypto.randomUUID();
+
                 const playerName =
                     msg.playerName ||
                     Math.random().toString(36).substring(2, 8);
@@ -290,6 +294,7 @@ wss.on("connection", (socket) => {
                 socket.send(
                     JSON.stringify({
                         type: "identitied",
+                        playerId,
                         playerName,
                         character
                     })
@@ -298,7 +303,6 @@ wss.on("connection", (socket) => {
                 return;
             case "join":
 		        // Player joins room
-                msg.playerId = msg.playerId || crypto.randomUUID();
                 room.clients.set(msg.playerId, socket);
 
                 let role = "spectator";
