@@ -88,7 +88,6 @@
 						break;
 
 					case "updated":
-						alert(playerId);
 						cards = msg.cards ?? [];
 						state = msg.state ?? [];
 						playerIds = msg.playerIds ?? [];
