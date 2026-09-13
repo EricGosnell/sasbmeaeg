@@ -1,6 +1,6 @@
 <script lang="ts">
 	let {
-		role,
+		playerRole,
 		ruleSubmitted,
 		code = $bindable(),
 		submitRule,
@@ -11,7 +11,7 @@
 </script>
 
 <section class="rule-box">
-	{#if role === "yardmaster"}
+	{#if playerRole === "yardmaster"}
 		<div class="rule-header">
 			<h2>Your Secret Rule</h2>
 		</div>
@@ -44,7 +44,7 @@
 				</button>
 			{/if}
 		</div>
-	{:else if role === "yarddog"}
+	{:else if playerRole === "yarddog"}
 		{#if !ruleSubmitted}
 			<button
 				class="secondary-button"
@@ -53,7 +53,7 @@
 				Be Spectator
 			</button>
 		{/if}
-	{:else if role === "spectator"}
+	{:else if playerRole === "spectator"}
 		{#if !ruleSubmitted}
 			<button
 				class="secondary-button"

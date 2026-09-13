@@ -1,8 +1,12 @@
 <script lang="ts">
 	import Character from "./Character.svelte";
+	import { connect, send } from "$lib/client/gameClient";
 
 	let {
+		roomId,
+		playerId,
 		playerName,
+		playerRole,
 		playerIds,
 		playerNames,
 		playerCharacters,
@@ -10,7 +14,10 @@
 		playerCards,
 		currentTurnPlayerId
 	}: {
+		roomId: string;
+		playerId: string;
 		playerName: string;
+		playerRole: string;
 		playerIds: string[];
 		playerNames: string[];
 		playerCharacters: any[];
@@ -18,6 +25,15 @@
 		playerCards: number[];
 		currentTurnPlayerId: string;
 	} = $props();
+
+	async function kick(kickPlayerId) {
+		send({
+			type: "kick",
+			roomId,
+			playerId,
+			kickPlayerId
+		});
+	}
 </script>
 
 <div class="players-row">
@@ -32,6 +48,11 @@
 						character={playerCharacters[i]}
 						size="small"
 					/>
+					{#if playerRole === "yardmaster"}
+					<button type="button" onclick={() => kick(playerIds[i])}>
+						Kick
+					</button>
+					{/if}
 				{/if}
 
 				<div class="player-info">

@@ -7,7 +7,7 @@
 		playerName,
 		playerCharacter,
 		cards,
-		role,
+		playerRole,
 		ruleSubmitted,
 		play,
 		playerId,
@@ -16,7 +16,7 @@
 		playerName: string;
 		playerCharacter: any;
 		cards: CardData[];
-		role: string;
+		playerRole: string;
 		ruleSubmitted: boolean;
 		play: (card: CardData) => void;
 		playerId: string;
@@ -24,9 +24,9 @@
 	} = $props();
 
 	const displayRole = $derived(
-        role === "yardmaster"
+        playerRole === "yardmaster"
             ? "Yardmaster"
-            : role === "yarddog"
+            : playerRole === "yarddog"
                 ? "Yard Dog"
                 : "Spectator"
     );

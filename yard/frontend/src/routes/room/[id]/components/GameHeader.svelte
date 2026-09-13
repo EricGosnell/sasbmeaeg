@@ -1,5 +1,5 @@
 <script lang="ts">
-	let { roomId, role }: { roomId: string; role: string } = $props();
+	let { roomId, playerRole }: { roomId: string; playerRole: string } = $props();
 </script>
 
 <header class="game-header">
@@ -7,7 +7,7 @@
 		Room {roomId}
 	</div>
 
-	{#if role === "yardmaster"}
+	{#if playerRole === "yardmaster"}
 		<button class="end-game" type="button">
 			End Game
 		</button>

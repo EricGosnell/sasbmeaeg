@@ -1,6 +1,6 @@
 <script lang="ts">
 	let {
-		role,
+		playerRole,
 		ruleSubmitted,
 		ruleCode = $bindable(),
 		submitRule,
@@ -20,7 +20,7 @@
 			.map((id, index) => ({
 				id,
 				name: playerNames[index] ?? "Unknown Player",
-				role: playerRoles[index] ?? ""
+				playerRole: playerRoles[index] ?? ""
 			}))
 			.filter(
 				(player) =>
@@ -36,7 +36,7 @@
 </script>
 
 <section class="rule-box">
-	{#if role === "yardmaster"}
+	{#if playerRole === "yardmaster"}
 		<div class="rule-header">
 			<h2>Your Secret Rule</h2>
 		</div>
@@ -86,7 +86,7 @@
 				</div>
 			{/if}
 		</div>
-	{:else if role === "yarddog"}
+	{:else if playerRole === "yarddog"}
 		{#if !ruleSubmitted}
 			<button
 				class="secondary-button"
@@ -95,7 +95,7 @@
 				Be Spectator
 			</button>
 		{/if}
-	{:else if role === "spectator"}
+	{:else if playerRole === "spectator"}
 		{#if !ruleSubmitted}
 			<button
 				class="secondary-button"

@@ -375,7 +375,7 @@ wss.on("connection", (socket) => {
                 update(msg.roomId);
 
                 return;
-            case "yield": {
+            case "yield": 
                 // Player yields rule to another Yard Dog
                 const newYardmaster = msg.newYardmasterId;
 
@@ -432,7 +432,43 @@ wss.on("connection", (socket) => {
                 update(room.roomId);
 
                 return;
-            }
+            case "kick":
+                // Only let yardmaster kick
+                const kickPlayerId = msg.kickPlayerId;
+
+                if (room.playerRoles.get(msg.playerId) !== "yardmaster" || 
+                    !room.playerIds.has(kickPlayerId)
+                ) {
+                    console.log(
+                        "Rejected kick ok",
+                        kickPlayerId,
+                        "from",
+                        msg.playerId
+                    );
+                }
+
+                room.playerIds.delete(kickPlayerId);
+                room.playerNames.delete(kickPlayerId);
+                room.playerCharacters.delete(kickPlayerId);
+                room.playerRoles.delete(kickPlayerId);
+                room.playerCards.delete(kickPlayerId);
+                room.playerOrder = room.playerOrder.filter(id => id !== kickPlayerId);
+
+                const kickedSocket = room.clients.get(kickPlayerId);
+                room.clients.delete(kickPlayerId);
+
+                if (kickedSocket) {
+                    kickedSocket.send(
+                        JSON.stringify({
+                            type: "kicked"
+                        })
+                    );
+                    kickedSocket.close();
+                }
+
+                update(msg.roomId);
+
+                return;
             case "spectate":
                 // Player switches to spectator
                 if (!room.playerIds.has(msg.playerId)) {

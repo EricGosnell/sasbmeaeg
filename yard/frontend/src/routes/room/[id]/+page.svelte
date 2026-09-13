@@ -17,7 +17,7 @@
 
 	let roomId = $state("");
 	let playerId = $state("");
-	let role = $state("");
+	let playerRole = $state("");
 	let playerName = $state("");
 	let playerCharacter = $state<any>(null);
 	let playerIds = $state<string[]>([]);
@@ -76,7 +76,7 @@
 						break;
 
 					case "joined":
-						role = msg.role;
+						playerRole = msg.role;
 						state = msg.state;
 						playerIds = msg.playerIds ?? [];
 						playerNames = msg.playerNames ?? [];
@@ -98,13 +98,13 @@
 						currentTurnPlayerId = msg.currentTurnPlayerId ?? "";
 						ruleSubmitted = msg.ruleSubmitted;
 
-						if (role === "yardmaster" && msg.ruleSubmitted) {
+						if (playerRole === "yardmaster" && msg.ruleSubmitted) {
 							ruleCode = msg.ruleCode;
 						}
 						break;
 
 					case "evaluate":
-						if (role === "yardmaster") {
+						if (playerRole === "yardmaster") {
 							const good = await evaluateRule(
 								ruleCode,
 								[...state, msg.card]
@@ -118,6 +118,10 @@
 							});
 						}
 						break;
+
+					case "kicked":
+						window.location.href = "/";
+						return;
 
 					case "error":
 						if (msg.message === "Room does not exist") {
@@ -218,12 +222,15 @@
 		<span class="suit s8">♣</span>
 	</div>
 
-	<GameHeader {roomId} {role} />
+	<GameHeader {roomId} {playerRole} />
 
 	<main class="game-layout">
 		<div class="players-area">
 			<PlayersRow
+				{roomId}
+				{playerId}
 				{playerName}
+				{playerRole}
 				{playerIds}
 				{playerNames}
 				{playerCharacters}
@@ -243,7 +250,7 @@
 					{playerName}
 					{playerCharacter}
 					{cards}
-					{role}
+					{playerRole}
 					{ruleSubmitted}
 					{play}
 					{playerId}
@@ -252,9 +259,9 @@
 			</div>
 
 			<div class="rule-area">
-				{#if role === "yardmaster"}
+				{#if playerRole === "yardmaster"}
 					<RuleBox
-						{role}
+						{playerRole}
 						{ruleSubmitted}
 						bind:ruleCode
 						{submitRule}
@@ -266,7 +273,7 @@
 						{playerNames}
 						{playerRoles}
 					/>
-				{:else if role === "yarddog"}
+				{:else if playerRole === "yarddog"}
 					<div class="notes-box">
 						<h2>Notes</h2>
 						<textarea

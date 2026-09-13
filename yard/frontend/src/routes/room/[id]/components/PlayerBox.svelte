@@ -4,7 +4,7 @@
 	let {
 		name,
 		character,
-		role,
+		playerRole,
 		cardCount
 	} = $props();
 </script>
@@ -22,7 +22,7 @@
 	</div>
 
 	<div class="player-role">
-		{role}
+		{playerRole}
 	</div>
 
 	<div class="card-count">
