@@ -12,8 +12,14 @@ let selectedEyes = $state(2);
 let selectedMouth = $state(0);
 
 onMount(() => {
+	const savedRoomId = sessionStorage.getItem("joinRoomId");
 	const savedPlayerName = sessionStorage.getItem("playerName");
 	const savedCharacter = sessionStorage.getItem("playerCharacter");
+
+	if (savedRoomId) {
+		roomId = savedRoomId;
+		sessionStorage.removeItem("joinRoomId");
+	}
 
 	if (savedPlayerName) {
 		playerName = savedPlayerName;
