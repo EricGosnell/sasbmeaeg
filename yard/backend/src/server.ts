@@ -17,6 +17,81 @@ type CharacterData = {
     mouth: string;
 };
 
+const validColors = [
+    "Purple",
+    "Blue",
+    "Green",
+    "Red",
+    "Yellow",
+    "Orange",
+    "Pink",
+    "Cyan",
+    "Teal",
+    "Lime",
+    "Gold",
+    "Coral",
+    "Lavender",
+    "Mint",
+    "Sky",
+    "White",
+    "Black"
+];
+const validEyes = [
+    "Dot",
+    "Sleepy",
+    "Big",
+    "Wide",
+    "Angry",
+    "Cross-Eyed",
+    "Starry",
+    "Laser",
+    "Monocle",
+    "Glasses",
+    "Shades",
+    "Heart",
+    "X",
+    "Spiral",
+    "Suspicious",
+    "Robot",
+    "Googly",
+    "Anime",
+    "Closed",
+    "One-Eyed",
+    "Three-Eyed",
+    "Alien"
+];
+const validMouths = [
+    "Smile",
+    "Flat",
+    "Happy",
+    "Open",
+    "Frown",
+    "Grin",
+    "Teeth",
+    "Fang",
+    "Vampire",
+    "Mustache",
+    "Big Mustache",
+    "Handlebar",
+    "Pipe",
+    "Goatee",
+    "Beard",
+    "Goofy",
+    "Surprised",
+    "Yell",
+    "Whistle",
+    "Cat",
+    "Duck",
+    "Robot",
+    "Money",
+    "Tongue",
+    "Derp",
+    "UwU",
+    "Evil",
+    "Clown",
+    "Monocle Mustache"
+];
+
 const defaultCharacter: CharacterData = {
     color: "Purple",
     eyes: "Dot",
@@ -27,81 +102,6 @@ function normalizeCharacter(character: any): CharacterData {
     if (!character) {
         return {...defaultCharacter};
     }
-
-    const validColors = [
-        "Purple",
-        "Blue",
-        "Green",
-        "Red",
-        "Yellow",
-        "Orange",
-        "Pink",
-        "Cyan",
-        "Teal",
-        "Lime",
-        "Gold",
-        "Coral",
-        "Lavender",
-        "Mint",
-        "Sky",
-        "White",
-        "Black"
-    ];
-    const validEyes = [
-        "Dot",
-        "Sleepy",
-        "Big",
-        "Wide",
-        "Angry",
-        "Cross-Eyed",
-        "Starry",
-        "Laser",
-        "Monocle",
-        "Glasses",
-        "Shades",
-        "Heart",
-        "X",
-        "Spiral",
-        "Suspicious",
-        "Robot",
-        "Googly",
-        "Anime",
-        "Closed",
-        "One-Eyed",
-        "Three-Eyed",
-        "Alien"
-    ];
-    const validMouths = [
-        "Smile",
-        "Flat",
-        "Happy",
-        "Open",
-        "Frown",
-        "Grin",
-        "Teeth",
-        "Fang",
-        "Vampire",
-        "Mustache",
-        "Big Mustache",
-        "Handlebar",
-        "Pipe",
-        "Goatee",
-        "Beard",
-        "Goofy",
-        "Surprised",
-        "Yell",
-        "Whistle",
-        "Cat",
-        "Duck",
-        "Robot",
-        "Money",
-        "Tongue",
-        "Derp",
-        "UwU",
-        "Evil",
-        "Clown",
-        "Monocle Mustache"
-    ];
 
     return {
         color: validColors.includes(character.color)
@@ -114,6 +114,14 @@ function normalizeCharacter(character: any): CharacterData {
             ? character.mouth
             : defaultCharacter.mouth
     };
+}
+
+function randomCharacter(): CharacterData {
+	return {
+		color: validColors[Math.floor(Math.random() * validColors.length)],
+		eyes: validEyes[Math.floor(Math.random() * validEyes.length)],
+		mouth: validMouths[Math.floor(Math.random() * validMouths.length)]
+	};
 }
 
 class BiMap<K extends string, V extends string> {
@@ -227,6 +235,8 @@ wss.on("connection", (socket) => {
         socket.roomId = room.roomId;
         socket.playerId = msg.playerId;
 
+        console.log(msg.type);
+
         switch (msg.type) {
             case "create":
                 // Player creates room
@@ -268,8 +278,27 @@ wss.on("connection", (socket) => {
                     })
                 );
                 return;
+            case "identity": 
+                const playerName =
+                    msg.playerName ||
+                    Math.random().toString(36).substring(2, 8);
+
+                const character = msg.character
+                    ? normalizeCharacter(msg.character)
+                    : randomCharacter();
+
+                socket.send(
+                    JSON.stringify({
+                        type: "identitied",
+                        playerName,
+                        character
+                    })
+                );
+
+                return;
             case "join":
 		        // Player joins room
+                msg.playerId = msg.playerId || crypto.randomUUID();
                 room.clients.set(msg.playerId, socket);
 
                 let role = "spectator";
@@ -300,7 +329,6 @@ wss.on("connection", (socket) => {
                         currentTurnPlayerId: room.playerOrder[room.currentTurn] ?? null,
                         state: room.state,
                         ruleSubmitted: room.ruleSubmitted,
-                        ruleCode: role === "yardmaster" ? room.ruleCode : null
                     })
                 );
 
@@ -314,15 +342,16 @@ wss.on("connection", (socket) => {
                     return;
                 }
 
-                room.ruleCode = msg.code;
+                room.ruleCode = msg.ruleCode;
                 room.ruleSubmitted = true;
 
-                room.playerOrder = [room.yardmaster];
+                room.playerOrder = [];
                 for (const playerId of room.playerIds) {
                     if (room.playerRoles.get(playerId) === "yarddog") {
                         room.playerOrder.push(playerId);
                     }
                 }
+                room.playerOrder.push(room.yardmaster);
 
                 const n = 7;
 
@@ -561,7 +590,8 @@ function update(
             playerCards: [...room.playerIds].map(id => room.playerCards.get(id)?.length),
             currentTurnPlayerId: room.playerOrder[room.currentTurn] ?? null,
             state: room.state,
-            ruleSubmitted: room.ruleSubmitted
+            ruleSubmitted: room.ruleSubmitted,
+            ruleCode: playerId == room.yardmaster ? room.ruleCode : null
         };
 
         if (room.playerIds.has(playerId)) {

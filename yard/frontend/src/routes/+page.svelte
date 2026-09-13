@@ -1,4 +1,5 @@
 <script lang="ts">
+import { onMount } from 'svelte';
 import { connect, send } from "$lib/client/gameClient.js";
 import CharacterFeatures from "$lib/components/CharacterFeatures.svelte";
 import "$lib/styles/landing.css";
@@ -9,6 +10,31 @@ let roomId = $state("");
 let selectedColor = $state(2);
 let selectedEyes = $state(2);
 let selectedMouth = $state(0);
+
+onMount(() => {
+	const savedPlayerName = sessionStorage.getItem("playerName");
+	const savedCharacter = sessionStorage.getItem("playerCharacter");
+
+	if (savedPlayerName) {
+		playerName = savedPlayerName;
+	}
+
+	if (savedCharacter) {
+		const character = JSON.parse(savedCharacter);
+
+		selectedColor = colors.findIndex(
+			(color) => color.name === character.color
+		);
+		selectedEyes = eyes.findIndex(
+			(eye) => eye === character.eyes
+		);
+		selectedMouth = mouths.findIndex(
+			(mouth) => mouth === character.mouth
+		);
+	} else {
+		randomizeCharacter()
+	}
+});
 
 const colors = [
 	{ name: "Purple", head: "#b000ff", body: "#a000e8" },
@@ -106,6 +132,14 @@ function savePlayer() {
 	sessionStorage.setItem("playerCharacter", JSON.stringify(getCharacter()));
 }
 
+$effect(() => {
+	sessionStorage.setItem("playerName", playerName);
+	sessionStorage.setItem(
+		"playerCharacter",
+		JSON.stringify(getCharacter())
+	);
+});
+
 async function createRoom(){
 	const playerId = crypto.randomUUID();
 
@@ -187,6 +221,7 @@ function joinRoom() {
 					id="playerName"
 					bind:value={playerName}
 					placeholder="Enter Your Name"
+					maxlength="32"
 				/>
 			</div>
 

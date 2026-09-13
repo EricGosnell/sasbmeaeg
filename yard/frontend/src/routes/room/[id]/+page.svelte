@@ -32,9 +32,8 @@
 	let state = $state<CardData[]>([]);
 
 	let ruleSubmitted = $state(false);
-	let ruleCode = $state("");
 
-	let code = $state(`function rules(state) {
+	let ruleCode = $state(`function rules(state) {
 		return suit(last(state)) == "Spades";
 	}`);
 
@@ -59,9 +58,11 @@
 				console.log("WebSocket message:", msg);
 
 				switch (msg.type) {
-					case "named":
+					case "identitied":
 						playerName = msg.playerName;
+						playerCharacter = msg.character;
 						sessionStorage.setItem("playerName", playerName);
+						sessionStorage.setItem("playerCharacter", playerCharacter);
 
 						send({
 							type: "join",
@@ -81,12 +82,7 @@
 						playerRoles = msg.playerRoles ?? [];
 						playerCards = msg.playerCards ?? [];
 						currentTurnPlayerId = msg.currentTurnPlayerId ?? "";
-
 						ruleSubmitted = msg.ruleSubmitted;
-
-						if (role === "yardmaster") {
-							ruleCode = msg.ruleCode;
-						}
 						break;
 
 					case "updated":
@@ -99,12 +95,16 @@
 						playerCards = msg.playerCards ?? [];
 						currentTurnPlayerId = msg.currentTurnPlayerId ?? "";
 						ruleSubmitted = msg.ruleSubmitted;
+
+						if (role === "yardmaster" && msg.ruleSubmitted) {
+							ruleCode = msg.ruleCode;
+						}
 						break;
 
 					case "evaluate":
 						if (role === "yardmaster") {
 							const good = await evaluateRule(
-								code,
+								ruleCode,
 								[...state, msg.card]
 							);
 
@@ -125,11 +125,13 @@
 				}
 			},
 			() => {
-				if (!playerName?.trim()) {
+				if (!playerName?.trim() || !playerCharacter) {
 					send({
-						type: "name",
+						type: "identity",
 						roomId,
-						playerId
+						playerId,
+						playerName: playerName?.trim() || null,
+						character: playerCharacter || null
 					});
 				} else {
 					send({
@@ -146,13 +148,12 @@
 
 	async function submitRule() {
 		ruleSubmitted = true;
-		ruleCode = code;
 
 		send({
 			type: "rule",
 			roomId,
 			playerId,
-			code
+			ruleCode
 		});
 
 		worker?.terminate();
@@ -253,7 +254,7 @@
 					<RuleBox
 						{role}
 						{ruleSubmitted}
-						bind:code
+						bind:ruleCode
 						{submitRule}
 						{yieldRule}
 						{beSpectator}

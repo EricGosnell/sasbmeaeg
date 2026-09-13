@@ -2,7 +2,7 @@
 	let {
 		role,
 		ruleSubmitted,
-		code = $bindable(),
+		ruleCode = $bindable(),
 		submitRule,
 		yieldRule,
 		beSpectator,
@@ -42,7 +42,7 @@
 		</div>
 
 		<textarea
-			bind:value={code}
+			bind:value={ruleCode}
 			rows="10"
 			disabled={ruleSubmitted}
 		></textarea>
